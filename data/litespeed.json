@@ -1,0 +1,110 @@
+{
+  "name": "LiteSpeed Security Hardening",
+  "category": "server",
+  "items": [
+    {
+      "id": "ls-admin-secure",
+      "title": "Secure LiteSpeed Admin Panel",
+      "severity": "critical",
+      "category": "server-config",
+      "description": "Change default admin port (7080) and restrict access by IP. Enable HTTPS for admin console.",
+      "implementation": {
+        "litespeed": "Admin Console > Configuration > Listeners > Admin HTTPS\n\n# Add to vhconf.xml:\n<security>\n  <accessControl>\n    <allow>YOUR_IP</allow>\n    <deny>ALL</deny>\n  </accessControl>\n</security>"
+      },
+      "verification": "Admin panel accessible only from whitelisted IPs on HTTPS",
+      "cwe": ["CWE-306"],
+      "references": ["https://docs.litespeedtech.com/lsws/admin/"]
+    },
+    {
+      "id": "ls-ssl-tls",
+      "title": "Configure Strong SSL/TLS Settings",
+      "severity": "critical",
+      "category": "network-security",
+      "description": "Disable SSLv3, TLS 1.0/1.1. Enable TLS 1.2/1.3 only with strong cipher suites.",
+      "implementation": {
+        "litespeed": "Admin > Configuration > SSL > SSL Protocol\n\nsslProtocol 24\n\nciphers HIGH:!aNULL:!MD5:!RC4\nenableECDHE 1\nenforceStrongCipher 1"
+      },
+      "verification": "SSL Labs test shows A+ rating with TLS 1.2+ only",
+      "cwe": ["CWE-319"],
+      "references": ["https://docs.litespeedtech.com/lsws/admin/config/ssl/"]
+    },
+    {
+      "id": "ls-waf-lsrecaptcha",
+      "title": "Enable LiteSpeed WAF and reCAPTCHA",
+      "severity": "high",
+      "category": "application-security",
+      "description": "Enable built-in Web Application Firewall and configure reCAPTCHA for brute force protection.",
+      "implementation": {
+        "litespeed": "Admin > Security > WAF\n\nmodule mod_security {\n  modsecurityEngine On\n  modsecurityRulesFile /path/to/rules.conf\n}\n\nreCAPTCHA {\n  enabled 1\n  type v3\n  siteKey YOUR_KEY\n  secretKey YOUR_SECRET\n}"
+      },
+      "verification": "WAF blocks common attacks like SQLi/XSS. reCAPTCHA appears after failed logins",
+      "cwe": ["CWE-693"],
+      "references": ["https://docs.litespeedtech.com/lsws/admin/config/security/"]
+    },
+    {
+      "id": "ls-cache-secure",
+      "title": "Secure Cache Configuration",
+      "severity": "high",
+      "category": "application-security",
+      "description": "Configure ESI (Edge Side Includes) securely. Do not cache sensitive pages. Set proper cache keys.",
+      "implementation": {
+        "litespeed": "Admin > Cache > Store Settings\n\nesiEnabled 1\nesiCacheControl 0\n\n# In .htaccess for sensitive paths:\n<IfModule Litespeed>\n  CacheDisable public /wp-admin\n  CacheDisable public /administrator\n  CacheDisable public /user/login\n</IfModule>"
+      },
+      "verification": "Sensitive pages not cached. Cache hits only on public content",
+      "cwe": ["CWE-200"],
+      "references": ["https://docs.litespeedtech.com/lscache/esi/"]
+    },
+    {
+      "id": "ls-ddos-protect",
+      "title": "Enable DDoS Protection",
+      "severity": "high",
+      "category": "network-security",
+      "description": "Configure connection limits, bandwidth throttling, and request rate limiting to prevent DDoS attacks.",
+      "implementation": {
+        "litespeed": "Admin > Configuration > Server > Security\n\nconnectionLimit 10000\nmaxConnectionsPerIP 100\nmaxReqsPerSec 50\nbanPeriod 300\n\n# Virtual host level:\n<security>\n  <accessControl>\n    <denyBot>badbot</denyBot>\n    <denyUserAgent>scanner</denyUserAgent>\n  </accessControl>\n</security>"
+      },
+      "verification": "Server remains responsive under load. Suspicious IPs automatically banned",
+      "cwe": ["CWE-770"],
+      "references": ["https://docs.litespeedtech.com/lsws/admin/config/security/"]
+    },
+    {
+      "id": "ls-headers-security",
+      "title": "Configure Security Headers",
+      "severity": "medium",
+      "category": "network-security",
+      "description": "Add X-Frame-Options, X-XSS-Protection, X-Content-Type-Options, CSP headers via LiteSpeed.",
+      "implementation": {
+        "litespeed": "Admin > Configuration > Server > Script Handler\n\n# In .htaccess:\n<IfModule mod_headers.c>\n  Header always set X-Frame-Options \"SAMEORIGIN\"\n  Header always set X-XSS-Protection \"1; mode=block\"\n  Header always set X-Content-Type-Options \"nosniff\"\n  Header always set Referrer-Policy \"strict-origin-when-cross-origin\"\n  Header always set Content-Security-Policy \"default-src 'self'\"\n</IfModule>"
+      },
+      "verification": "securityheaders.com shows all headers configured correctly",
+      "cwe": ["CWE-693"],
+      "references": ["https://securityheaders.com/"]
+    },
+    {
+      "id": "ls-hide-version",
+      "title": "Hide Server Version Information",
+      "severity": "low",
+      "category": "server-config",
+      "description": "Disable server version banner in HTTP headers to prevent information disclosure.",
+      "implementation": {
+        "litespeed": "Admin > Configuration > Server > General Settings\n\n# In httpd_config.conf:\nserverSignature Off\nserverTokens ProductOnly\n\n# Or hide completely:\n<IfModule mod_headers.c>\n  Header unset Server\n  Header unset X-Powered-By\n</IfModule>"
+      },
+      "verification": "curl -I shows no Server header or only 'Server: LiteSpeed' without version",
+      "cwe": ["CWE-200"],
+      "references": ["https://docs.litespeedtech.com/lsws/admin/config/general/"]
+    },
+    {
+      "id": "ls-file-permissions",
+      "title": "Secure File Permissions",
+      "severity": "critical",
+      "category": "os-security",
+      "description": "Ensure LiteSpeed directories and configuration files have proper permissions. Protect logs and cache.",
+      "implementation": {
+        "litespeed": "# /usr/local/lsws ownership\nchown -R lsadm:lsadm /usr/local/lsws/conf\nchmod 750 /usr/local/lsws/conf\nchmod 600 /usr/local/lsws/conf/*.conf\n\n# Logs directory\nchown -R nobody:nobody /usr/local/lsws/logs\nchmod 755 /usr/local/lsws/logs\n\n# Cache directory\nchown -R nobody:nobody /usr/local/lsws/cache\nchmod 755 /usr/local/lsws/cache"
+      },
+      "verification": "ls -la /usr/local/lsws/conf shows 600 permissions for .conf files",
+      "cwe": ["CWE-732"],
+      "references": ["https://docs.litespeedtech.com/lsws/install/file-permissions/"]
+    }
+  ]
+}
