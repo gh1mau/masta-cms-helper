@@ -1,6 +1,6 @@
 /**
  * KEV Renderer Module - Professional CISA KEV Display
- * Groups vulnerabilities by year and renders them in a clean card layout
+ * Row-based table layout with CVE.org links
  */
 
 class KEVRenderer {
@@ -58,54 +58,51 @@ class KEVRenderer {
           <span class="kev-year-badge">${year}</span>
           <span class="kev-year-count">${items.length} vulnerabilities</span>
         </div>
-        <div class="kev-year-grid">
-          ${items.map(item => this.renderKEVCard(item)).join('')}
+        <div class="kev-table">
+          <div class="kev-table-header">
+            <div class="kev-col kev-col-id">CVE ID</div>
+            <div class="kev-col kev-col-severity">Severity</div>
+            <div class="kev-col kev-col-product">Vendor › Product</div>
+            <div class="kev-col kev-col-description">Vulnerability</div>
+            <div class="kev-col kev-col-duedate">Due Date</div>
+          </div>
+          <div class="kev-table-body">
+            ${items.map(item => this.renderKEVRow(item)).join('')}
+          </div>
         </div>
       </div>
     `;
   }
 
-  renderKEVCard(item) {
+  renderKEVRow(item) {
     const severityClass = this.getSeverityClass(item.cvss);
     const severityLabel = this.getSeverityLabel(item.cvss);
-    const shortDesc = this.truncate(item.vulnerability, 60);
     
     return `
-      <div class="kev-card ${severityClass}">
-        <div class="kev-card-header">
-          <a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext=${item.id}" 
+      <div class="kev-table-row ${severityClass}">
+        <div class="kev-col kev-col-id">
+          <a href="https://www.cve.org/CVERecord?id=${item.id}" 
              target="_blank" 
              rel="noopener"
-             class="kev-id" 
-             title="View in CISA Catalog">
+             class="kev-id-link" 
+             title="View on CVE.org">
             ${item.id}
           </a>
-          <div class="kev-score-badge ${severityClass}">
-            <span class="kev-score-value">${item.cvss.toFixed(1)}</span>
-            <span class="kev-score-label">${severityLabel}</span>
-          </div>
         </div>
-        
-        <div class="kev-card-body">
-          <div class="kev-vendor-row">
-            <span class="kev-vendor">${item.vendor}</span>
-            <span class="kev-separator">›</span>
-            <span class="kev-product">${item.product}</span>
-          </div>
-          <div class="kev-description" title="${this.escapeHtml(item.vulnerability)}">
-            ${shortDesc}
-          </div>
+        <div class="kev-col kev-col-severity">
+          <span class="kev-severity-badge ${severityClass}">${severityLabel}</span>
+          <span class="kev-score-value">${item.cvss.toFixed(1)}</span>
         </div>
-        
-        <div class="kev-card-footer">
-          <div class="kev-duedate">
-            <i class="fas fa-calendar-alt"></i>
-            <span class="kev-duedate-label">Patch Due:</span>
-            <span class="kev-duedate-value">${item.dueDate}</span>
-          </div>
-          <div class="kev-info" title="${this.escapeHtml(item.notes || '')}">
-            <i class="fas fa-info-circle"></i>
-          </div>
+        <div class="kev-col kev-col-product">
+          <span class="kev-vendor">${item.vendor}</span>
+          <span class="kev-separator">›</span>
+          <span class="kev-product">${item.product}</span>
+        </div>
+        <div class="kev-col kev-col-description" title="${this.escapeHtml(item.vulnerability)}">
+          ${item.vulnerability}
+        </div>
+        <div class="kev-col kev-col-duedate">
+          <i class="fas fa-clock"></i> ${item.dueDate}
         </div>
       </div>
     `;
@@ -123,12 +120,6 @@ class KEVRenderer {
     if (cvss >= 7) return 'HIGH';
     if (cvss >= 4) return 'MEDIUM';
     return 'LOW';
-  }
-
-  truncate(text, maxLength) {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength).trim() + '...';
   }
 
   escapeHtml(text) {
@@ -157,13 +148,11 @@ class KEVRenderer {
 
     if (kevStatus) {
       if (this.isLiveData) {
-        // Data loaded successfully (from local JSON via GitHub Actions)
         kevStatus.innerHTML = `
           <span class="status-dot online" style="background: #3fb950; box-shadow: 0 0 8px #3fb950;"></span>
           <span style="color: #3fb950; font-weight: 600;">✓ LOADED</span>
         `;
       } else {
-        // Fallback to embedded data
         kevStatus.innerHTML = `
           <span class="status-dot offline" style="background: #58a6ff; box-shadow: 0 0 8px #58a6ff;"></span>
           <span style="color: #58a6ff; font-weight: 600;">EMBEDDED</span>
