@@ -1145,7 +1145,7 @@ class App {
   renderCVECard(item) {
     const date = new Date(item.publishedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     return `
-      <a href="https://nvd.nist.gov/vuln/detail/${item.id}" target="_blank" rel="noopener" class="cve-card ${item.severity}">
+      <a href="https://www.cve.org/CVERecord?id=${item.id}" target="_blank" rel="noopener" class="cve-card ${item.severity}">
         <div class="cve-card-header">
           <span class="cve-id">${item.id}</span>
           <span class="cve-score ${item.severity}">${item.cvssScore.toFixed(1)}</span>
