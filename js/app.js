@@ -149,7 +149,7 @@ async function loadHardeningData(files) {
 }
 
 // Available hardening data files
-const HARDENING_FILES = ['joomla', 'wordpress', 'drupal', 'apache', 'nginx', 'litespeed', 'iis', 'linux', 'windows'];
+const HARDENING_FILES = ['joomla', 'wordpress', 'drupal', 'apache', 'nginx', 'iis', 'linux', 'windows'];
 
 // ==========================================
 // CISA KEV CATALOG - Loaded from kev_data.js
