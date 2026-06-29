@@ -138,8 +138,17 @@ async function loadHardeningData(files) {
         continue;
       }
       const json = await response.json();
-      data[file] = json.items || [];
-      console.log(`✅ Loaded ${file}.json: ${data[file].length} items`);
+      // Handle both formats: object with items property OR direct array
+      if (Array.isArray(json)) {
+        data[file] = json;
+        console.log(`✅ Loaded ${file}.json: ${data[file].length} items (array format)`);
+      } else if (json.items && Array.isArray(json.items)) {
+        data[file] = json.items;
+        console.log(`✅ Loaded ${file}.json: ${data[file].length} items (object format)`);
+      } else {
+        console.warn(`⚠️ ${file}.json has no valid items array`);
+        data[file] = [];
+      }
     } catch (error) {
       console.error(`❌ Error loading ${file}.json:`, error);
       data[file] = [];

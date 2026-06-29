@@ -1,0 +1,15 @@
+# Documentation files
+AGENTS.md
+SETUP-GUIDE.md
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
