@@ -1,0 +1,344 @@
+[
+  {
+    "id": "nginx-worker-rlimit",
+    "title": "Set Worker Rlimit and Connection Limits",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Limit worker processes and connections to prevent resource exhaustion DoS.",
+    "implementation": {
+      "apache": "Limit max connections at OS level with ulimit",
+      "nginx": "worker_rlimit_nofile 65535; worker_processes auto; worker_connections 4096;",
+      "linux": "ulimit -n 65535; grep 'worker_' /etc/nginx/nginx.conf"
+    },
+    "verification": "nginx -t passes; concurrent connections handled without crashing",
+    "cwe": [
+      "CWE-770"
+    ],
+    "references": [
+      "http://nginx.org/en/docs/ngx_core_module.html#worker_rlimit_nofile"
+    ]
+  },
+  {
+    "id": "nginx-rate-limit",
+    "title": "Implement Rate Limiting per IP",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Use limit_req and limit_conn modules to throttle requests and connections per client.",
+    "implementation": {
+      "apache": "Use mod_evasive or mod_qos",
+      "nginx": "limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s; limit_req zone=general burst=20 nodelay;",
+      "linux": "nginx -t && systemctl reload nginx"
+    },
+    "verification": "Excessive rate returns 503 or 429; legit traffic not impacted",
+    "cwe": [
+      "CWE-770"
+    ],
+    "references": [
+      "http://nginx.org/en/docs/http/ngx_http_limit_req_module.html"
+    ]
+  },
+  {
+    "id": "nginx-buffer-sizes",
+    "title": "Configure Buffer Sizes to Prevent Overflow",
+    "severity": "critical",
+    "category": "application-security",
+    "description": "Set client_body_buffer_size, client_header_buffer_size, and proxy buffers to prevent memory exhaustion.",
+    "implementation": {
+      "apache": "LimitRequestBody and related directives",
+      "nginx": "client_body_buffer_size 128k; client_header_buffer_size 1k; large_client_header_buffers 4 8k; client_body_timeout 60s;",
+      "linux": "nginx -t && systemctl reload nginx"
+    },
+    "verification": "Large malformed headers return 414 or 400 without memory spike",
+    "cwe": [
+      "CWE-770"
+    ],
+    "references": [
+      "http://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size"
+    ]
+  },
+  {
+    "id": "nginx-ssl-harden",
+    "title": "Harden SSL/TLS and Enable OCSP Stapling",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Enforce TLS 1.2+, disable weak ciphers, enable OCSP stapling, and configure session tickets.",
+    "implementation": {
+      "apache": "SSLProtocol -all +TLSv1.2 +TLSv1.3",
+      "nginx": "ssl_protocols TLSv1.2 TLSv1.3; ssl_ciphers 'ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384'; ssl_prefer_server_ciphers on; ssl_stapling on; ssl_stapling_verify on;",
+      "linux": "certbot --nginx -d example.com"
+    },
+    "verification": "SSL Labs test shows A+ rating; OCSP stapling enabled",
+    "cwe": [
+      "CWE-319"
+    ],
+    "references": [
+      "https://ssl-config.mozilla.org/"
+    ]
+  },
+  {
+    "id": "nginx-hide-version",
+    "title": "Hide Nginx Version Number",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Prevent nginx from revealing version in error pages and headers.",
+    "implementation": {
+      "apache": "ServerTokens Prod",
+      "nginx": "server_tokens off; in http block",
+      "linux": "nginx -t && systemctl reload nginx"
+    },
+    "verification": "curl -I shows Server: nginx only, no version number; error pages generic",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "http://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens"
+    ]
+  },
+  {
+    "id": "nginx-security-headers",
+    "title": "Add Security Headers",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Configure X-Frame-Options, X-XSS-Protection, HSTS, CSP, and Referrer-Policy via add_header.",
+    "implementation": {
+      "apache": "Header always set directives",
+      "nginx": "add_header X-Frame-Options SAMEORIGIN always; add_header X-Content-Type-Options nosniff always; add_header Referrer-Policy strict-origin-when-cross-origin; add_header Strict-Transport-Security max-age=31536000 always;",
+      "linux": "curl -I https://example.com | grep -i x-frame"
+    },
+    "verification": "curl -I shows all security headers on all responses",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://securityheaders.com/"
+    ]
+  },
+  {
+    "id": "nginx-directory-listing",
+    "title": "Disable Directory Listing and Autoindex",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Ensure autoindex is off to prevent directory listing of file contents.",
+    "implementation": {
+      "apache": "Options -Indexes",
+      "nginx": "autoindex off; in http or server block",
+      "linux": "grep -r 'autoindex' /etc/nginx/"
+    },
+    "verification": "Access directory without index returns 403 or 404, not file list",
+    "cwe": [
+      "CWE-548"
+    ],
+    "references": [
+      "http://nginx.org/en/docs/http/ngx_http_autoindex_module.html"
+    ]
+  },
+  {
+    "id": "nginx-restrict-uploads",
+    "title": "Block PHP Execution in Upload Directories",
+    "severity": "critical",
+    "category": "application-security",
+    "description": "Prevent execution of PHP and other scripts in user-upload directories.",
+    "implementation": {
+      "apache": ".htaccess with php_flag engine off",
+      "nginx": "location /uploads/ { location ~ \\.php$ { deny all; } } location /wp-content/uploads/ { location ~ \\.php$ { deny all; } }",
+      "linux": "nginx -t && systemctl reload nginx"
+    },
+    "verification": "Upload PHP to uploads; direct access returns 403 Forbidden",
+    "cwe": [
+      "CWE-434"
+    ],
+    "references": [
+      "https://www.nginx.com/resources/wiki/start/topics/examples/phpfcgi/"
+    ]
+  },
+  {
+    "id": "nginx-gzip-security",
+    "title": "Secure Gzip Settings",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Avoid compressing responses that contain user input; be aware of BREACH attack implications.",
+    "implementation": {
+      "apache": "ModDeflate with similar considerations",
+      "nginx": "gzip_types text/plain text/css application/json application/javascript; gzip_min_length 1000;",
+      "linux": "grep gzip /etc/nginx/nginx.conf"
+    },
+    "verification": "No compression of user-sensitive query results; use HTTPS to mitigate BREACH",
+    "cwe": [
+      "CWE-319"
+    ],
+    "references": [
+      "http://nginx.org/en/docs/http/ngx_http_gzip_module.html"
+    ]
+  },
+  {
+    "id": "nginx-access-log",
+    "title": "Enable Detailed Access Logging",
+    "severity": "high",
+    "category": "application-security",
+    "description": "Log all requests with real_ip, user agent, response time, and status to filesystem.",
+    "implementation": {
+      "apache": "CustomLog with response time",
+      "nginx": "log_format detail '$remote_addr - $request_time [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\"'; access_log /var/log/nginx/access.log detail;",
+      "linux": "ls -la /var/log/nginx/access.log"
+    },
+    "verification": "Access log contains request time and full user agent strings",
+    "cwe": [
+      "CWE-778"
+    ],
+    "references": [
+      "http://nginx.org/en/docs/http/ngx_http_log_module.html"
+    ]
+  },
+  {
+    "id": "nginx-proxy-hide-headers",
+    "title": "Hide Backend Headers and Use Custom Values",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Strip backend headers (X-Powered-By, Server) from upstream responses before sending to client.",
+    "implementation": {
+      "apache": "mod_headers to unset headers",
+      "nginx": "proxy_hide_header X-Powered-By; proxy_hide_header Server; fastcgi_hide_header X-Powered-By;",
+      "linux": "nginx -t && systemctl reload nginx"
+    },
+    "verification": "curl -I shows no X-Powered-By or upstream Server headers",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header"
+    ]
+  },
+  {
+    "id": "nginx-https-redirect",
+    "title": "Force HTTPS Redirect and HSTS Preload",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Redirect all HTTP to HTTPS with 301 and include HSTS preload directives.",
+    "implementation": {
+      "apache": "RewriteCond/RewriteRule for redirect",
+      "nginx": "server { listen 80; return 301 https://$host$request_uri; } add_header Strict-Transport-Security max-age=63072000 always; includeSubDomains; preload",
+      "linux": "certbot --nginx -d example.com"
+    },
+    "verification": "http:// redirects to https:// with 301; HSTS header present",
+    "cwe": [
+      "CWE-319"
+    ],
+    "references": [
+      "https://hstspreload.org/"
+    ]
+  },
+  {
+    "id": "nginx-referer-valid",
+    "title": "Validate Referer for Sensitive Actions",
+    "severity": "medium",
+    "category": "network-security",
+    "description": "Use valid_referers to block hotlinking and unexpected cross-site requests for protected content.",
+    "implementation": {
+      "apache": "mod_rewrite RewriteCond HTTP_REFERER",
+      "nginx": "valid_referers server_names example.com *.example.com; if ($invalid_referer) { return 403; }",
+      "linux": "nginx -t && systemctl reload nginx"
+    },
+    "verification": "Hotlinking images from external site returns 403",
+    "cwe": [
+      "CWE-942"
+    ],
+    "references": [
+      "http://nginx.org/en/docs/http/ngx_http_referer_module.html"
+    ]
+  },
+  {
+    "id": "nginx-restrict-methods",
+    "title": "Limit Allowed HTTP Methods",
+    "severity": "medium",
+    "category": "network-security",
+    "description": "Only allow GET, HEAD, POST, PUT, DELETE needed by application. Block TRACE/OPTIONS if not needed.",
+    "implementation": {
+      "apache": "<LimitExcept GET POST HEAD> deny all </LimitExcept>",
+      "nginx": "if ($request_method !~ ^(GET|HEAD|POST)$) { return 405; }",
+      "linux": "nginx -t && systemctl reload nginx"
+    },
+    "verification": "TRACE request returns 405; DELETE request returns 405 if not allowed",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "http://nginx.org/en/docs/http/ngx_http_core_module.html#limit_except"
+    ]
+  },
+  {
+    "id": "nginx-csp",
+    "title": "Implement Content Security Policy",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Set CSP headers to prevent XSS and data injection attacks.",
+    "implementation": {
+      "apache": "Header always set Content-Security-Policy",
+      "nginx": "add_header Content-Security-Policy \"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'self'; base-uri 'self';\" always;",
+      "linux": "nginx -t && systemctl reload nginx"
+    },
+    "verification": "Browser dev tools show CSP header; no console violations",
+    "cwe": [
+      "CWE-79"
+    ],
+    "references": [
+      "https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP"
+    ]
+  },
+  {
+    "id": "nginx-custom-error",
+    "title": "Configure Custom Error Pages",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Replace default error pages with custom pages that do not leak information.",
+    "implementation": {
+      "apache": "ErrorDocument directives",
+      "nginx": "error_page 404 /404.html; error_page 500 502 503 504 /50x.html; location = /50x.html { internal; }",
+      "linux": "mkdir -p /var/www/html/errors"
+    },
+    "verification": "Trigger 404 and 500; custom error page shown with no version info",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "http://nginx.org/en/docs/http/ngx_http_core_module.html#error_page"
+    ]
+  },
+  {
+    "id": "nginx-split-clients",
+    "title": "Use Geo or Map for Access Control",
+    "severity": "medium",
+    "category": "access-control",
+    "description": "Block or rate-limit countries/regions by IP using geo module or third-party geo DB.",
+    "implementation": {
+      "apache": "mod_geoip2 or mod_maxminddb",
+      "nginx": "geoip_country /usr/share/GeoIP/GeoIP.dat; map $geoip_country_code $allowed_country { default no; US yes; } if ($allowed_country = no) { return 403; }",
+      "linux": "apt install libnginx-mod-http-geoip"
+    },
+    "verification": "Requests from blocked country IP return 403; allowed countries pass",
+    "cwe": [
+      "CWE-284"
+    ],
+    "references": [
+      "http://nginx.org/en/docs/http/ngx_http_geoip_module.html"
+    ]
+  },
+  {
+    "id": "nginx-xframe-deny",
+    "title": "Strict X-Frame-Options for Clickjacking",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Add X-Frame-Options DENY or SAMEORIGIN to prevent your site from being framed by attackers.",
+    "implementation": {
+      "apache": "Header always set X-Frame-Options SAMEORIGIN",
+      "nginx": "add_header X-Frame-Options SAMEORIGIN always;",
+      "linux": "curl -I https://example.com | grep x-frame"
+    },
+    "verification": "Embedding in iframe on another domain is blocked by browser",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options"
+    ]
+  }
+]

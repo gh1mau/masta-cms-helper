@@ -1,0 +1,459 @@
+[
+  {
+    "id": "linux-ssh-harden",
+    "title": "Harden SSH Configuration",
+    "severity": "critical",
+    "category": "network-security",
+    "description": "Disable root login, password authentication, and set key-only auth. Change default port and limit users.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Edit /etc/ssh/sshd_config: PermitRootLogin no; PasswordAuthentication no; PubkeyAuthentication yes; AllowUsers admin deploy; Port 22022; systemctl restart sshd"
+    },
+    "verification": "ssh root@host fails; key-only login works; port 22 refused",
+    "cwe": [
+      "CWE-798"
+    ],
+    "references": [
+      "https://wiki.centos.org/HowTos/Network/SecuringSSH"
+    ]
+  },
+  {
+    "id": "linux-fail2ban",
+    "title": "Install and Configure fail2ban",
+    "severity": "critical",
+    "category": "network-security",
+    "description": "Automatically ban IPs with excessive failed login attempts on SSH, web, and mail services.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "apt install fail2ban; configure /etc/fail2ban/jail.local: backend=systemd; bantime=3600; maxretry=3; enable sshd, apache, nginx jails"
+    },
+    "verification": "3 failed SSH login attempts result in banned IP (iptables/ufw shows drop)",
+    "cwe": [
+      "CWE-307"
+    ],
+    "references": [
+      "https://www.fail2ban.org/wiki/index.php/Main_Page"
+    ]
+  },
+  {
+    "id": "linux-selinux-apparmor",
+    "title": "Enable SELinux or AppArmor",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Mandatory access control confines process capabilities. Enforce targeted policy or AppArmor profiles for web server.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "SELinux: setenforce 1; sestatus shows enforcing. AppArmor: aa-enforce /etc/apparmor.d/usr.sbin.nginx; aa-enforce /etc/apparmor.d/usr.sbin.apache2"
+    },
+    "verification": "Web server process cannot read /etc/shadow or write outside web root",
+    "cwe": [
+      "CWE-284"
+    ],
+    "references": [
+      "https://selinuxproject.org/",
+      "https://gitlab.com/apparmor/apparmor"
+    ]
+  },
+  {
+    "id": "linux-sysctl-kernel",
+    "title": "Harden Kernel Parameters via sysctl",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Disable IP spoofing, enable SYN cookies, disable ICMP redirects, and harden TCP stack.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Edit /etc/sysctl.conf: net.ipv4.tcp_syncookies=1; net.ipv4.ip_forward=0; net.ipv4.conf.all.send_redirects=0; net.ipv4.conf.all.accept_redirects=0; kernel.randomize_va_space=2; sysctl -p"
+    },
+    "verification": "sysctl -a shows tcp_syncookies=1; kernel.randomize_va_space=2 enabled",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://www.kernel.org/doc/Documentation/sysctl/kernel.txt"
+    ]
+  },
+  {
+    "id": "linux-iptables-firewall",
+    "title": "Configure iptables/ufw Firewall",
+    "severity": "critical",
+    "category": "network-security",
+    "description": "Default deny policy. Only allow necessary ports: 80, 443, 22022. Enable connection tracking and rate limiting.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "ufw default deny incoming; ufw allow 80; ufw allow 443; ufw allow 22022; ufw enable. Or iptables: iptables -P INPUT DROP; iptables -A INPUT -p tcp --dport 80 -j ACCEPT"
+    },
+    "verification": "nmap scan shows only 80, 443, 22022 open; all other ports filtered",
+    "cwe": [
+      "CWE-284"
+    ],
+    "references": [
+      "https://wiki.debian.org/ufw"
+    ]
+  },
+  {
+    "id": "linux-auto-updates",
+    "title": "Enable Automatic Security Updates",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Configure unattended-upgrades (Debian) or yum-cron (RHEL) to install security patches automatically.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "apt install unattended-upgrades; dpkg-reconfigure -plow unattended-upgrades. Or yum install yum-cron; systemctl enable yum-cron"
+    },
+    "verification": "Check /var/log/apt/history.log for automatic security upgrades; yum history for RHEL",
+    "cwe": [
+      "CWE-937"
+    ],
+    "references": [
+      "https://wiki.debian.org/UnattendedUpgrades"
+    ]
+  },
+  {
+    "id": "linux-log-audit",
+    "title": "Enable Auditd for System Call Auditing",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Monitor sensitive files and system calls for unauthorized access or privilege escalation.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "apt install auditd; configure /etc/audit/rules.d/audit.rules; auditctl -w /etc/passwd -p wa -k passwd_changes; systemctl enable auditd"
+    },
+    "verification": "ausearch -k passwd_changes shows recent password file modifications",
+    "cwe": [
+      "CWE-778"
+    ],
+    "references": [
+      "https://linux.die.net/man/8/auditd"
+    ]
+  },
+  {
+    "id": "linux-rsyslog-forward",
+    "title": "Configure Centralized Logging",
+    "severity": "medium",
+    "category": "os-security",
+    "description": "Forward logs to centralized SIEM or syslog server to prevent tampering and enable correlation.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "rsyslog config: *.* @logserver.example.com:514; enable TLS if available"
+    },
+    "verification": "Logs visible on central log server; local tampering detectable by discrepancy",
+    "cwe": [
+      "CWE-778"
+    ],
+    "references": [
+      "https://www.rsyslog.com/doc/v8-stable/configuration/index.html"
+    ]
+  },
+  {
+    "id": "linux-account-lockout",
+    "title": "Account Lockout and Password Policy",
+    "severity": "high",
+    "category": "authentication",
+    "description": "Enforce password expiration, complexity, and lockout after failed attempts using PAM.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Edit /etc/security/faillock.conf and /etc/pam.d/common-auth; pam_faillock.so deny=5 unlock_time=900"
+    },
+    "verification": "5 failed login attempts lock account for 15 minutes",
+    "cwe": [
+      "CWE-307"
+    ],
+    "references": [
+      "https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/configuring_system_security/assembly_configuring-account-lockout-according-to-the-pp-policy_configuring-system-security"
+    ]
+  },
+  {
+    "id": "linux-disable-unnecessary-services",
+    "title": "Disable Unnecessary Services and Ports",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Remove or disable unused services, daemons, and cron jobs to reduce attack surface.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "systemctl list-unit-files --type=service | grep enabled; systemctl disable telnet; systemctl disable ftp"
+    },
+    "verification": "netstat -tulpn shows only required services listening; no telnet/ftp",
+    "cwe": [
+      "CWE-1092"
+    ],
+    "references": [
+      "https://wiki.centos.org/TipsAndTricks/ServicesDisable"
+    ]
+  },
+  {
+    "id": "linux-mount-options",
+    "title": "Secure Mount Options for Filesystems",
+    "severity": "medium",
+    "category": "os-security",
+    "description": "Mount /tmp, /var/tmp with noexec, nodev, nosuid. /boot as read-only if possible.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Edit /etc/fstab: /tmp     ext4  defaults,noexec,nosuid,nodev  0 0"
+    },
+    "verification": "mount | grep /tmp shows noexec,nodev,nosuid flags",
+    "cwe": [
+      "CWE-732"
+    ],
+    "references": [
+      "https://wiki.archlinux.org/title/Security#Filesystem"
+    ]
+  },
+  {
+    "id": "linux-file-integrity-aide",
+    "title": "Deploy File Integrity Monitoring (AIDE)",
+    "severity": "high",
+    "category": "os-security",
+    "description": "AIDE monitors system files for unauthorized changes. Schedule daily checks.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "apt install aide; aideinit; mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db; cron daily aide --check"
+    },
+    "verification": "Test: touch /usr/bin/testfile; aide --check reports new file",
+    "cwe": [
+      "CWE-494"
+    ],
+    "references": [
+      "https://wiki.debian.org/AIDE"
+    ]
+  },
+  {
+    "id": "linux-sudo-restrict",
+    "title": "Restrict sudo and Remove SUID Binaries",
+    "severity": "high",
+    "category": "access-control",
+    "description": "Limit sudo to specific commands. Audit and remove unnecessary SUID/SGID binaries.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "visudo: user ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart nginx; find / -perm /6000 -type f 2>/dev/null"
+    },
+    "verification": "user cannot sudo commands not listed; SUID count decreased",
+    "cwe": [
+      "CWE-250"
+    ],
+    "references": [
+      "https://wiki.debian.org/sudo"
+    ]
+  },
+  {
+    "id": "linux-malware-scan",
+    "title": "Install and Schedule Malware Scan (ClamAV)",
+    "severity": "medium",
+    "category": "os-security",
+    "description": "Regularly scan web root and uploads for malware signatures using ClamAV.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "apt install clamav clamav-daemon; systemctl enable clamav-freshclam; freshclam; 0 3 * * * clamscan -r /var/www/html > /var/log/clamscan.log"
+    },
+    "verification": "Test with EICAR file; clamscan detects and reports it",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://www.clamav.net/"
+    ]
+  },
+  {
+    "id": "linux-ntp-sync",
+    "title": "Synchronize Time with NTP",
+    "severity": "medium",
+    "category": "os-security",
+    "description": "Install NTP or chronyd to ensure accurate timestamps for logs and event correlation.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "apt install chrony; systemctl enable chronyd; chronyc sources shows synced servers"
+    },
+    "verification": "timedatectl shows NTP synchronized: yes",
+    "cwe": [
+      "CWE-778"
+    ],
+    "references": [
+      "https://chrony.tuxfamily.org/"
+    ]
+  },
+  {
+    "id": "linux-grub-password",
+    "title": "Set GRUB Bootloader Password",
+    "severity": "medium",
+    "category": "os-security",
+    "description": "Protect single-user mode and boot parameters by setting a GRUB password.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "grub-mkpasswd-pbkdf2; paste hash into /etc/grub.d/40_custom: set superusers=\"root\" password_pbkdf2 ... ; update-grub"
+    },
+    "verification": "Boot into recovery mode prompts for GRUB password",
+    "cwe": [
+      "CWE-306"
+    ],
+    "references": [
+      "https://www.debian.org/doc/manuals/securing-debian-howto/ch4.en.html#s4.3"
+    ]
+  },
+  {
+    "id": "linux-pam-totp",
+    "title": "Enable TOTP for SSH (libpam-google-authenticator)",
+    "severity": "high",
+    "category": "authentication",
+    "description": "Require 2FA TOTP codes in addition to SSH keys for privileged access.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "apt install libpam-google-authenticator; run google-authenticator; add auth required pam_google_authenticator.so to /etc/pam.d/sshd; ChallengeResponseAuthentication yes"
+    },
+    "verification": "SSH login requires verification code after key authentication",
+    "cwe": [
+      "CWE-308"
+    ],
+    "references": [
+      "https://github.com/google/google-authenticator-libpam"
+    ]
+  },
+  {
+    "id": "linux-backups-encrypted",
+    "title": "Encrypted Offsite Backups",
+    "severity": "high",
+    "category": "data-protection",
+    "description": "Encrypt backups before transferring to offsite storage. Use duplicity or restic.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "restic init --repo s3:s3.amazonaws.com/bucket; restic backup /var/www/html --exclude-file=/etc/backup-excludes"
+    },
+    "verification": "Restored backup is accessible only with correct decryption password",
+    "cwe": [
+      "CWE-311"
+    ],
+    "references": [
+      "https://restic.net/"
+    ]
+  },
+  {
+    "id": "linux-docker-harden",
+    "title": "Harden Docker / Container Runtime",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Run containers as non-root, drop capabilities, use read-only root FS, and limit resources.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "docker run --user=1000 --read-only --cap-drop=ALL --security-opt=no-new-privileges -m 512m ..."
+    },
+    "verification": "docker inspect shows User: 1000, ReadonlyRootfs: true, CapDrop: ALL",
+    "cwe": [
+      "CWE-250"
+    ],
+    "references": [
+      "https://docs.docker.com/engine/security/security/"
+    ]
+  },
+  {
+    "id": "linux-no-core-dumps",
+    "title": "Disable Core Dumps to Prevent Credential Exposure",
+    "severity": "medium",
+    "category": "data-protection",
+    "description": "Core dumps may contain sensitive memory contents including passwords and private keys.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "ulimit -c 0; echo * hard core 0 >> /etc/security/limits.conf; sysctl -w fs.suid_dumpable=0"
+    },
+    "verification": "ulimit -c shows 0; intentionally crash a test process; no core file created",
+    "cwe": [
+      "CWE-532"
+    ],
+    "references": [
+      "https://wiki.debian.org/LTS"
+    ]
+  },
+  {
+    "id": "linux-snmp-disable",
+    "title": "Disable SNMP if Not Needed",
+    "severity": "medium",
+    "category": "network-security",
+    "description": "SNMP can expose system information and be a target for community string attacks.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "systemctl stop snmpd; systemctl disable snmpd; apt remove snmpd"
+    },
+    "verification": "netstat shows no UDP 161; snmpwalk against host times out",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://wiki.debian.org/Snmp"
+    ]
+  },
+  {
+    "id": "linux-permissions-check",
+    "title": "Regular Permission and SUID Audit",
+    "severity": "medium",
+    "category": "os-security",
+    "description": "Schedule weekly cron to find world-writable files, SUID binaries, and .ssh key permissions.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "0 0 * * 0 find / -xdev -type f \\( -perm -0002 -o -perm -4000 \\) -ls > /var/log/perms_audit.log"
+    },
+    "verification": "Audit log contains no unexpected world-writable files in /etc, /usr, or /var",
+    "cwe": [
+      "CWE-732"
+    ],
+    "references": [
+      "https://wiki.centos.org/TipsAndTricks/BecomingRoot"
+    ]
+  },
+  {
+    "id": "linux-memory-protection",
+    "title": "Enable ASLR, DEP, and Stack Canaries",
+    "severity": "medium",
+    "category": "os-security",
+    "description": "Ensure kernel and compiler hardening features are active: ASLR, NX bit, and stack canaries.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "kernel.randomize_va_space=2 already set via sysctl; gcc stack-protector enabled by default"
+    },
+    "verification": "sysctl kernel.randomize_va_space returns 2; checksec --file=/usr/bin/nginx shows Full RELRO, Canary, NX",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://linux-audit.com/linux-aslr-and-its-effect-on-buffer-overflow-exploitation/"
+    ]
+  },
+  {
+    "id": "linux-logrotate-protect",
+    "title": "Secure Log Rotation and Retention",
+    "severity": "low",
+    "category": "os-security",
+    "description": "Configure logrotate with secure permissions (640 or 600) and sufficient retention for compliance.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Edit /etc/logrotate.conf: create 0640 root adm; compress; delaycompress; rotate 52"
+    },
+    "verification": "Log files in /var/log are 640 or 600; at least 52 weeks of compressed logs retained",
+    "cwe": [
+      "CWE-530"
+    ],
+    "references": [
+      "https://wiki.debian.org/LogRotation"
+    ]
+  }
+]

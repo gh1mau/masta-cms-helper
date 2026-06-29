@@ -1,0 +1,287 @@
+[
+  {
+    "id": "iis-request-filter",
+    "title": "Configure Request Filtering Module",
+    "severity": "critical",
+    "category": "application-security",
+    "description": "Use IIS Request Filtering to block double-encoded requests, high bit characters, and file extensions.",
+    "implementation": {
+      "apache": "mod_security with similar rules",
+      "nginx": "ngx_http_access_module",
+      "linux": "Edit applicationHost.config: requestFiltering allowDoubleEscaping=false; allowHighBitCharacters=false"
+    },
+    "verification": "Double encoded requests like %252f return 404.403; non-ASCII blocked",
+    "cwe": [
+      "CWE-694"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/iis/manage/configuring-security/using-request-filtering-rules"
+    ]
+  },
+  {
+    "id": "iis-urlscan",
+    "title": "Install and Configure URLScan",
+    "severity": "high",
+    "category": "application-security",
+    "description": "URLScan 3.1 filters HTTP requests by verbs, extensions, and content length to block malicious input.",
+    "implementation": {
+      "apache": "mod_security Core Rule Set",
+      "nginx": "ngx_http_limit_req",
+      "linux": "Install URLScan via Web Platform Installer; configure urlscan.ini"
+    },
+    "verification": "Denied URL patterns return 404 with URLScan logging",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://www.iis.net/downloads/microsoft/urlscan"
+    ]
+  },
+  {
+    "id": "iis-ip-restrictions",
+    "title": "Enable IP and Domain Restrictions",
+    "severity": "high",
+    "category": "access-control",
+    "description": "Install IP and Domain Restrictions module to allow/deny by IP range or domain.",
+    "implementation": {
+      "apache": "mod_access_compat with Deny/Allow",
+      "nginx": "allow/deny directives",
+      "linux": "Install IP and Domain Restrictions feature; configure web.config ipSecurity"
+    },
+    "verification": "Blocked IP receives 403.6 Forbidden; allowed IPs pass normally",
+    "cwe": [
+      "CWE-284"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/iis/manage/configuring-security/using-ip-and-domain-restrictions"
+    ]
+  },
+  {
+    "id": "iis-dynamic-restrictions",
+    "title": "Enable Dynamic IP Security Restrictions",
+    "severity": "high",
+    "category": "access-control",
+    "description": "Block IPs that exceed request rate or concurrent connections. Integrate with Azure if needed.",
+    "implementation": {
+      "apache": "mod_evasive",
+      "nginx": "limit_req and limit_conn modules",
+      "linux": "Install Dynamic IP Restrictions; configure maxRequests and maxConcurrentRequests"
+    },
+    "verification": "Rapid refresh triggers 403.6 from dynamic restriction; logs show blocked IP",
+    "cwe": [
+      "CWE-770"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/iis/manage/configuring-security/using-dynamic-ip-restrictions"
+    ]
+  },
+  {
+    "id": "iis-ssl-binding",
+    "title": "Require SSL/TLS and Configure Bindings",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Require SSL for all bindings. Disable weak TLS versions. Use certificates with proper subject names.",
+    "implementation": {
+      "apache": "SSLEngine on with SSLProtocol -all +TLSv1.2 +TLSv1.3",
+      "nginx": "ssl_protocols TLSv1.2 TLSv1.3",
+      "linux": "IIS Manager > Site Bindings > Require SSL; use HSTS IIS module"
+    },
+    "verification": "HTTP binding returns redirect to HTTPS; TLS 1.1 negotiation fails",
+    "cwe": [
+      "CWE-319"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/iis/manage/configuring-security/understanding-iis-url-authorization"
+    ]
+  },
+  {
+    "id": "iis-hsts",
+    "title": "Enable HTTP Strict Transport Security (HSTS)",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Install HSTS IIS module and configure max-age, includeSubDomains, and preload directives.",
+    "implementation": {
+      "apache": "Header always set Strict-Transport-Security",
+      "nginx": "add_header Strict-Transport-Security",
+      "linux": "Install HSTS IIS module; web.config: <hsts enabled=true max-age=31536000 includeSubDomains=true preload=true />"
+    },
+    "verification": "Browser dev tools show HSTS header; https://hstspreload.org/ passes",
+    "cwe": [
+      "CWE-319"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/iis/extensions/url-rewrite-module/using-the-url-rewrite-module"
+    ]
+  },
+  {
+    "id": "iis-url-rewrite",
+    "title": "Install and Use URL Rewrite Module",
+    "severity": "medium",
+    "category": "network-security",
+    "description": "Use URL rewrite for canonical hostnames, redirects, and request blocking rules.",
+    "implementation": {
+      "apache": "mod_rewrite",
+      "nginx": "ngx_http_rewrite_module",
+      "linux": "Install URL Rewrite module; configure inbound rules in web.config"
+    },
+    "verification": "Non-canonical host redirects to canonical; blocked patterns return 403",
+    "cwe": [
+      "CWE-289"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/iis/extensions/url-rewrite-module/using-the-url-rewrite-module"
+    ]
+  },
+  {
+    "id": "iis-error-pages",
+    "title": "Configure Custom Error Pages",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Replace default IIS error pages with custom pages to prevent version disclosure.",
+    "implementation": {
+      "apache": "ErrorDocument directives",
+      "nginx": "error_page directives",
+      "linux": "IIS Manager > Error Pages > Edit Feature Settings > Custom error pages"
+    },
+    "verification": "404/500 show custom page; no IIS version or stack trace leaked",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/iis/configuration/system.webserver/httperrors/"
+    ]
+  },
+  {
+    "id": "iis-remove-headers",
+    "title": "Remove Server Disclosure Headers",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Remove Server, X-Powered-By, and ASP.NET version headers using URL Rewrite or custom modules.",
+    "implementation": {
+      "apache": "mod_headers to unset",
+      "nginx": "proxy_hide_header",
+      "linux": "Install IIS Remove Headers module or use URL Rewrite outbound rule"
+    },
+    "verification": "curl -I shows no Server, X-Powered-By, or X-AspNet-Version headers",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/iis/extensions/url-rewrite-module/"
+    ]
+  },
+  {
+    "id": "iis-app-pool-identities",
+    "title": "Use Application Pool Identities",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Run each site under its own app pool with least privilege instead of NetworkService or LocalSystem.",
+    "implementation": {
+      "apache": "Use separate user per vhost with suexec or mod_itk",
+      "nginx": "worker processes under limited user",
+      "linux": "IIS Manager > Application Pools > Identity: ApplicationPoolIdentity; assign unique pool per site"
+    },
+    "verification": "w3wp.exe runs under IIS APPPOOL\\SiteName; cannot access other sites files",
+    "cwe": [
+      "CWE-250"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/iis/manage/configuring-security/application-pool-identities"
+    ]
+  },
+  {
+    "id": "iis-logs-write",
+    "title": "Enable W3C Logging and Protect Log Files",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Log all requests with full fields. Restrict log directory permissions to prevent tampering.",
+    "implementation": {
+      "apache": "CustomLog with full fields",
+      "nginx": "detailed log format",
+      "linux": "IIS Manager > Logging > W3C format; set log dir permissions to administrators only"
+    },
+    "verification": "Logs contain referer, user-agent, and response time; not writable by IIS user",
+    "cwe": [
+      "CWE-778"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/iis/manage/provisioning-and-managing-iis/configure-logging-in-iis"
+    ]
+  },
+  {
+    "id": "iis-ftp-secure",
+    "title": "Secure FTP or Disable If Not Needed",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Use FTPS or SFTP instead of plain FTP. Disable FTP service if not actively used.",
+    "implementation": {
+      "apache": "Use FTPS or SFTP alternative",
+      "nginx": "Not applicable",
+      "linux": "IIS Manager > FTP > FTP over SSL; Require SSL for control and data channels"
+    },
+    "verification": "FTP connection requires certificate negotiation; plain FTP on port 21 blocked or disabled",
+    "cwe": [
+      "CWE-319"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/iis/publish/using-the-ftp-service/configuring-ftp-over-ssl-in-iis-7"
+    ]
+  },
+  {
+    "id": "iis-webdav-disable",
+    "title": "Disable WebDAV if Not Needed",
+    "severity": "high",
+    "category": "application-security",
+    "description": "WebDAV allows file upload and modification via HTTP. Disable if not in use.",
+    "implementation": {
+      "apache": "Disable mod_dav",
+      "nginx": "Not applicable unless third-party module installed",
+      "linux": "IIS Manager > WebDAV Authoring Rules > Disable WebDAV; remove WebDAV handler mapping"
+    },
+    "verification": "PROPFIND and PUT requests return 405 Not Allowed or 404",
+    "cwe": [
+      "CWE-434"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/iis/manage/configuring-security/using-webdav"
+    ]
+  },
+  {
+    "id": "iis-aspnet-validation",
+    "title": "Enable ASP.NET Request Validation",
+    "severity": "high",
+    "category": "application-security",
+    "description": "Enable request validation to block potentially dangerous input like XSS payloads in form data.",
+    "implementation": {
+      "apache": "mod_security CRS",
+      "nginx": "ngx_http_lua or WAF",
+      "linux": "web.config: <pages validateRequest=true />; Machine.config default validateRequest=true"
+    },
+    "verification": "POST with <script>alert(1)</script> returns ASP.NET validation error",
+    "cwe": [
+      "CWE-79"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/aspnet/whitepapers/request-validation"
+    ]
+  },
+  {
+    "id": "iis-windows-auth-kerb",
+    "title": "Use Windows Authentication with Kerberos",
+    "severity": "high",
+    "category": "authentication",
+    "description": "Enable Windows Authentication with negotiate (Kerberos) for internal applications. Disable Anonymous if not needed.",
+    "implementation": {
+      "apache": "mod_auth_kerb or mod_authnz_ldap",
+      "nginx": "ngx_http_auth_request_module with LDAP",
+      "linux": "IIS Manager > Authentication > Windows Authentication enabled; Anonymous Authentication disabled"
+    },
+    "verification": "Browser negotiates Kerberos ticket; network login prompt suppressed",
+    "cwe": [
+      "CWE-306"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/iis/configuration/system.webserver/security/authentication/windowsauthentication"
+    ]
+  }
+]

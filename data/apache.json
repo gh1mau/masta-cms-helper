@@ -1,0 +1,382 @@
+[
+  {
+    "id": "apache-modsecurity",
+    "title": "Enable and Configure ModSecurity WAF",
+    "severity": "critical",
+    "category": "application-security",
+    "description": "Enable ModSecurity with OWASP Core Rule Set to protect against SQLi, XSS, RCE, and common web attacks.",
+    "implementation": {
+      "apache": "a2enmod security2; set SecRuleEngine On; include /usr/share/modsecurity-crs/*.conf",
+      "nginx": "Use ModSecurity-nginx connector or alternative WAF",
+      "linux": "apt install libapache2-mod-security2 modsecurity-crs -y"
+    },
+    "verification": "Test with SQLi payload: curl -s 'http://example.com/?id=1 OR 1=1' triggers 403",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://owasp.org/www-project-modsecurity-core-rule-set/"
+    ]
+  },
+  {
+    "id": "apache-security-headers",
+    "title": "Configure Comprehensive Security Headers",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Set X-Frame-Options, X-XSS-Protection, X-Content-Type-Options, Referrer-Policy, CSP, HSTS.",
+    "implementation": {
+      "apache": "Header always set X-Frame-Options SAMEORIGIN; Header always set X-Content-Type-Options nosniff; Header always set Referrer-Policy strict-origin-when-cross-origin; Header always set Strict-Transport-Security max-age=31536000; includeSubDomains",
+      "nginx": "add_header X-Frame-Options SAMEORIGIN; add_header Referrer-Policy strict-origin-when-cross-origin",
+      "linux": "apache2ctl configtest && systemctl restart apache2"
+    },
+    "verification": "curl -I https://example.com shows all security headers",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://securityheaders.com/"
+    ]
+  },
+  {
+    "id": "apache-directory-listing",
+    "title": "Disable Directory Listing",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Prevent Apache from showing directory contents when no index file exists.",
+    "implementation": {
+      "apache": "Options -Indexes in httpd.conf or .htaccess globally",
+      "nginx": "autoindex off; in nginx.conf",
+      "linux": "grep -i 'indexes' /etc/apache2/apache2.conf"
+    },
+    "verification": "Access directory without index file returns 403 Forbidden",
+    "cwe": [
+      "CWE-548"
+    ],
+    "references": [
+      "https://httpd.apache.org/docs/2.4/mod/core.html#options"
+    ]
+  },
+  {
+    "id": "apache-server-tokens",
+    "title": "Hide Server Version and OS Tokens",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Prevent Apache from advertising version and OS in error pages and Server header.",
+    "implementation": {
+      "apache": "ServerTokens Prod; ServerSignature Off; in httpd.conf or security.conf",
+      "nginx": "server_tokens off; in nginx.conf",
+      "linux": "apache2ctl configtest && systemctl restart apache2"
+    },
+    "verification": "curl -I shows Server: Apache only, no version or OS info; error pages show generic text",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://httpd.apache.org/docs/2.4/mod/core.html#servertokens"
+    ]
+  },
+  {
+    "id": "apache-trace-enable",
+    "title": "Disable TRACE and TRACK Methods",
+    "severity": "high",
+    "category": "network-security",
+    "description": "TRACE/TRACK methods can be used for cross-site tracing (XST) and cookie theft attacks.",
+    "implementation": {
+      "apache": "TraceEnable Off; in httpd.conf or security.conf",
+      "nginx": "Not applicable by default; if enabled via modules, disable",
+      "linux": "apache2ctl configtest && systemctl restart apache2"
+    },
+    "verification": "curl -X TRACE returns 405 Method Not Allowed",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://httpd.apache.org/docs/2.4/mod/core.html#traceenable"
+    ]
+  },
+  {
+    "id": "apache-ssl-config",
+    "title": "Harden SSL/TLS Configuration",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Enforce TLS 1.2+, disable weak ciphers, enable OCSP stapling, and perfect forward secrecy.",
+    "implementation": {
+      "apache": "SSLProtocol -all +TLSv1.2 +TLSv1.3; SSLCipherSuite HIGH:!aNULL:!MD5:!RC4; SSLHonorCipherOrder on; SSLSessionTickets Off",
+      "nginx": "ssl_protocols TLSv1.2 TLSv1.3; ssl_ciphers HIGH:!aNULL:!MD5; ssl_prefer_server_ciphers on",
+      "linux": "openssl s_client -connect example.com:443 -tls1_2"
+    },
+    "verification": "SSL Labs scan shows A+ rating with TLS 1.2+ and no weak ciphers",
+    "cwe": [
+      "CWE-319"
+    ],
+    "references": [
+      "https://ssl-config.mozilla.org/"
+    ]
+  },
+  {
+    "id": "apache-etags",
+    "title": "Disable ETags and Use Content Hash",
+    "severity": "low",
+    "category": "application-security",
+    "description": "ETags reveal inode numbers in default config. Disable them or configure FileETag none.",
+    "implementation": {
+      "apache": "FileETag None; or FileETag MTime Size; in httpd.conf",
+      "nginx": "etag off; in nginx.conf",
+      "linux": "grep -i 'fileetag' /etc/apache2/apache2.conf"
+    },
+    "verification": "curl -I shows no ETag header or ETag without inode info",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://httpd.apache.org/docs/2.4/mod/core.html#fileetag"
+    ]
+  },
+  {
+    "id": "apache-req-size",
+    "title": "Limit Request Body and Header Sizes",
+    "severity": "medium",
+    "category": "network-security",
+    "description": "Prevent DoS via oversized requests. Limit body to sensible max based on app requirements.",
+    "implementation": {
+      "apache": "LimitRequestBody 10485760; LimitRequestFields 50; LimitRequestFieldSize 8190",
+      "nginx": "client_max_body_size 10m; client_header_buffer_size 1k; large_client_header_buffers 4 8k",
+      "linux": "apache2ctl configtest"
+    },
+    "verification": "Uploading 20MB file returns 413 Request Entity Too Large",
+    "cwe": [
+      "CWE-770"
+    ],
+    "references": [
+      "https://httpd.apache.org/docs/2.4/mod/core.html#limitrequestbody"
+    ]
+  },
+  {
+    "id": "apache-timeout",
+    "title": "Reduce Timeout and KeepAlive Settings",
+    "severity": "medium",
+    "category": "network-security",
+    "description": "Lower timeout values to free connections faster and reduce slowloris attack surface.",
+    "implementation": {
+      "apache": "Timeout 45; KeepAlive On; KeepAliveTimeout 5; MaxKeepAliveRequests 100",
+      "nginx": "keepalive_timeout 65 20; send_timeout 10s",
+      "linux": "apache2ctl configtest && systemctl restart apache2"
+    },
+    "verification": "Slowloris connections are terminated within 45 seconds",
+    "cwe": [
+      "CWE-770"
+    ],
+    "references": [
+      "https://httpd.apache.org/docs/2.4/mod/core.html#timeout"
+    ]
+  },
+  {
+    "id": "apache-logging",
+    "title": "Enable Comprehensive Access and Error Logging",
+    "severity": "high",
+    "category": "application-security",
+    "description": "Log all access with detailed format including response time, user agent, and referer. Enable mod_unique_id.",
+    "implementation": {
+      "apache": "LogFormat combined with %T response time; mod_unique_id for request correlation",
+      "nginx": "Configure detailed log format in nginx.conf",
+      "linux": "a2enmod unique_id; systemctl restart apache2"
+    },
+    "verification": "Access logs contain request IDs and response time fields",
+    "cwe": [
+      "CWE-778"
+    ],
+    "references": [
+      "https://httpd.apache.org/docs/2.4/mod/mod_log_config.html"
+    ]
+  },
+  {
+    "id": "apache-cgi-disable",
+    "title": "Disable Unnecessary Modules (CGI, SSI, Dav)",
+    "severity": "high",
+    "category": "application-security",
+    "description": "Remove unused modules like mod_cgi, mod_include, mod_dav, mod_info, mod_status, mod_imagemap to reduce attack surface.",
+    "implementation": {
+      "apache": "a2dismod cgi include dav info status imagemap; systemctl restart apache2",
+      "nginx": "Ensure only required modules are compiled; use minimal modules",
+      "linux": "apache2ctl -M | grep -i 'cgi|dav|info|status'"
+    },
+    "verification": "Disabled modules are not loaded; apache2ctl -M confirms",
+    "cwe": [
+      "CWE-1104"
+    ],
+    "references": [
+      "https://httpd.apache.org/docs/2.4/mod/"
+    ]
+  },
+  {
+    "id": "apache-content-negotiation",
+    "title": "Disable Content Negotiation and MultiViews",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "MultiViews can expose source code and cause information disclosure attacks.",
+    "implementation": {
+      "apache": "Options -MultiViews in all directory blocks and virtual hosts",
+      "nginx": "Not applicable; nginx does not support content negotiation",
+      "linux": "grep -r 'MultiViews' /etc/apache2/"
+    },
+    "verification": "Request file extension variations do not trigger content negotiation",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://httpd.apache.org/docs/2.4/content-negotiation.html"
+    ]
+  },
+  {
+    "id": "apache-rewrite-secure",
+    "title": "Secure mod_rewrite Rules",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Use RewriteCond with %{THE_REQUEST} to prevent direct access to scripts, block uploaded PHP execution.",
+    "implementation": {
+      "apache": "RewriteCond %{THE_REQUEST} \\.php/.+ HTTP; RewriteRule .* - [F,L] for uploaded PHP protection",
+      "nginx": "location ~* /uploads/.*\\.php$ { deny all; }",
+      "linux": "apache2ctl configtest && systemctl restart apache2"
+    },
+    "verification": "Uploaded PHP file inside image directory returns 403",
+    "cwe": [
+      "CWE-434"
+    ],
+    "references": [
+      "https://httpd.apache.org/docs/2.4/mod/mod_rewrite.html"
+    ]
+  },
+  {
+    "id": "apache-disable-symlinks",
+    "title": "Disable FollowSymlinks if Not Needed",
+    "severity": "medium",
+    "category": "os-security",
+    "description": "FollowSymLinks can allow directory traversal through symbolic links. Use SymLinksIfOwnerMatch instead.",
+    "implementation": {
+      "apache": "Options -FollowSymLinks +SymLinksIfOwnerMatch in Directory blocks",
+      "nginx": "Not applicable; nginx resolves symlinks to real paths",
+      "linux": "grep -r 'FollowSymLinks' /etc/apache2/sites-enabled/"
+    },
+    "verification": "Symlink to system files returns 403 or 404",
+    "cwe": [
+      "CWE-22"
+    ],
+    "references": [
+      "https://httpd.apache.org/docs/2.4/mod/core.html#options"
+    ]
+  },
+  {
+    "id": "apache-chroot",
+    "title": "Run Apache in chroot or AppArmor Context",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Restrict Apache process to web root using chroot or AppArmor to contain breaches.",
+    "implementation": {
+      "apache": "AppArmor profile: /etc/apparmor.d/usr.sbin.apache2; restrict to /var/www",
+      "nginx": "AppArmor profile for nginx worker processes",
+      "linux": "aa-enforce /etc/apparmor.d/usr.sbin.apache2"
+    },
+    "verification": "Apache process cannot read /etc/passwd or write outside /var/www",
+    "cwe": [
+      "CWE-284"
+    ],
+    "references": [
+      "https://ubuntu.com/server/docs/apparmor"
+    ]
+  },
+  {
+    "id": "apache-tls-cert-valid",
+    "title": "Use Valid TLS Certificates and Auto-Renewal",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Deploy valid certificates from trusted CA. Automate renewal with certbot.",
+    "implementation": {
+      "apache": "certbot --apache -d example.com -d www.example.com; configure auto-renew cron",
+      "nginx": "certbot --nginx -d example.com",
+      "linux": "certbot renew --dry-run"
+    },
+    "verification": "SSL Labs test shows valid certificate chain, not expired, no warnings",
+    "cwe": [
+      "CWE-295"
+    ],
+    "references": [
+      "https://certbot.eff.org/"
+    ]
+  },
+  {
+    "id": "apache-cors-strict",
+    "title": "Implement Strict CORS Configuration",
+    "severity": "medium",
+    "category": "network-security",
+    "description": "Only allow CORS on specific endpoints needed; do not use wildcard origins.",
+    "implementation": {
+      "apache": "Header set Access-Control-Allow-Origin https://example.com; Header set Access-Control-Allow-Methods GET POST",
+      "nginx": "add_header Access-Control-Allow-Origin https://example.com",
+      "linux": "curl -H Origin:https://evil.com -I https://example.com/api returns no ACAO header"
+    },
+    "verification": "Unauthorized origin requests CORS headers are absent",
+    "cwe": [
+      "CWE-942"
+    ],
+    "references": [
+      "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS"
+    ]
+  },
+  {
+    "id": "apache-custom-error-pages",
+    "title": "Configure Custom Error Pages",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Replace default error pages with custom pages that do not reveal server version or stack traces.",
+    "implementation": {
+      "apache": "ErrorDocument 404 /errors/404.html; ErrorDocument 500 /errors/500.html",
+      "nginx": "error_page 404 /404.html; error_page 500 502 503 504 /50x.html",
+      "linux": "Create /var/www/html/errors/ pages"
+    },
+    "verification": "Trigger 404 and 500; custom page shown with no version disclosure",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://httpd.apache.org/docs/2.4/custom-error.html"
+    ]
+  },
+  {
+    "id": "apache-rate-limit",
+    "title": "Implement Rate Limiting for IPs",
+    "severity": "medium",
+    "category": "network-security",
+    "description": "Install and configure mod_evasive or mod_qos to block abusive request patterns.",
+    "implementation": {
+      "apache": "apt install libapache2-mod-evasive; configure DOSPageCount=50; DOSSiteCount=100",
+      "nginx": "Use limit_req module",
+      "linux": "a2enmod evasive; systemctl restart apache2"
+    },
+    "verification": "Abusive IP gets 403 or connection dropped after threshold",
+    "cwe": [
+      "CWE-770"
+    ],
+    "references": [
+      "https://github.com/jzdziarski/mod_evasive"
+    ]
+  },
+  {
+    "id": "apache-access-control",
+    "title": "Restrict Sensitive Directories and Files",
+    "severity": "high",
+    "category": "access-control",
+    "description": "Block access to .git, .env, backup files, and config files that may contain credentials.",
+    "implementation": {
+      "apache": "<FilesMatch \\.(git|env|bak|sql|config)$> Order allow,deny; Deny from all </FilesMatch>",
+      "nginx": "location ~ /\\.(git|env) { deny all; }",
+      "linux": "touch /var/www/html/.git/config; curl -I should return 403"
+    },
+    "verification": "Access to .git/config, .env, or .sql files returns 403 Forbidden",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://httpd.apache.org/docs/2.4/mod/mod_access_compat.html"
+    ]
+  }
+]

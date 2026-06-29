@@ -1,0 +1,477 @@
+[
+  {
+    "id": "wp-wpconfig-salts",
+    "title": "Regenerate WordPress Security Keys and Salts",
+    "severity": "critical",
+    "category": "application-security",
+    "description": "Replace default AUTH_KEY, SECURE_AUTH_KEY, LOGGED_IN_KEY, NONCE_KEY and corresponding salts with unique values.",
+    "implementation": {
+      "apache": "Edit wp-config.php and regenerate at https://api.wordpress.org/secret-key/1.1/salt/",
+      "nginx": "Same procedure - edit wp-config.php",
+      "linux": "curl -s https://api.wordpress.org/secret-key/1.1/salt/ >> wp-config.php"
+    },
+    "verification": "All AUTH_KEY, SECURE_AUTH_KEY, LOGGED_IN_KEY, NONCE_KEY are unique and not default/empty",
+    "cwe": [
+      "CWE-798"
+    ],
+    "references": [
+      "https://wordpress.org/support/article/editing-wp-config-php/#security-keys"
+    ]
+  },
+  {
+    "id": "wp-file-permissions",
+    "title": "Set Secure File and Directory Permissions",
+    "severity": "critical",
+    "category": "os-security",
+    "description": "Files should be 644, directories 755. wp-config.php should be 600 or 440.",
+    "implementation": {
+      "apache": "chmod -R 644 /var/www/html/*; chmod -R 755 /var/www/html/*; chmod 600 wp-config.php",
+      "nginx": "chmod -R 644 /var/www/html/*; chmod -R 755 /var/www/html/*",
+      "linux": "chown www-data:www-data /var/www/html -R; chmod 600 /var/www/html/wp-config.php"
+    },
+    "verification": "ls -la shows 644 for files, 755 for dirs, 600 for wp-config.php",
+    "cwe": [
+      "CWE-732"
+    ],
+    "references": [
+      "https://wordpress.org/support/article/changing-file-permissions/"
+    ]
+  },
+  {
+    "id": "wp-admin-htaccess",
+    "title": "Password Protect wp-admin Directory",
+    "severity": "critical",
+    "category": "access-control",
+    "description": "Add HTTP Basic Authentication to wp-admin to prevent unauthorized access even if WordPress auth is bypassed.",
+    "implementation": {
+      "apache": "htpasswd -c /etc/apache2/.htpasswd admin; Add AuthType Basic in wp-admin/.htaccess",
+      "nginx": "Use nginx auth_basic; point to htpasswd file in location block",
+      "linux": "htpasswd -c /etc/nginx/.htpasswd admin"
+    },
+    "verification": "Accessing /wp-admin prompts for HTTP Basic Auth credentials before WordPress login",
+    "cwe": [
+      "CWE-306"
+    ],
+    "references": [
+      "https://wordpress.org/support/article/brute-force-attacks/"
+    ]
+  },
+  {
+    "id": "wp-xmlrpc-disable",
+    "title": "Disable XML-RPC if Not Needed",
+    "severity": "high",
+    "category": "application-security",
+    "description": "XML-RPC is a common attack vector for brute force amplification and pingback DDoS. Disable if unused.",
+    "implementation": {
+      "apache": "Add to .htaccess: Files xmlrpc.php -> deny from all; OR use plugin",
+      "nginx": "location /xmlrpc.php { deny all; return 403; }",
+      "linux": "mv /var/www/html/xmlrpc.php /var/www/html/xmlrpc.php.disabled"
+    },
+    "verification": "POST to /xmlrpc.php returns 403 Forbidden or 404 Not Found",
+    "cwe": [
+      "CWE-770"
+    ],
+    "references": [
+      "https://wordpress.org/support/article/xml-rpc-security/"
+    ]
+  },
+  {
+    "id": "wp-rest-api-restrict",
+    "title": "Restrict REST API Access",
+    "severity": "high",
+    "category": "application-security",
+    "description": "Limit REST API endpoints to authenticated users or specific IP ranges. Exposes user data by default.",
+    "implementation": {
+      "apache": "Use plugin or add RewriteRule to block /wp-json/wp/v2/users",
+      "nginx": "location /wp-json/wp/v2/users { deny all; }",
+      "linux": "Add code to functions.php: add_filter('rest_authentication_errors' ... )"
+    },
+    "verification": "GET /wp-json/wp/v2/users returns 403 or requires authentication",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://developer.wordpress.org/rest-api/frequently-asked-questions/"
+    ]
+  },
+  {
+    "id": "wp-wpconfig-db-prefix",
+    "title": "Change Default Database Table Prefix",
+    "severity": "medium",
+    "category": "database-security",
+    "description": "Change wp_ to a random prefix during install or via migration to prevent SQLi enumeration.",
+    "implementation": {
+      "apache": "Edit wp-config.php: table_prefix = 'xyz123_'; rename all DB tables",
+      "nginx": "Same process - edit wp-config.php and rename tables",
+      "linux": "Use wp-cli: wp search-replace 'wp_comments' 'xyz123_comments'"
+    },
+    "verification": "SHOW TABLES shows custom prefix, no tables starting with wp_",
+    "cwe": [
+      "CWE-656"
+    ],
+    "references": [
+      "https://wordpress.org/support/article/editing-wp-config-php/#table_prefix"
+    ]
+  },
+  {
+    "id": "wp-wpconfig-debug-off",
+    "title": "Disable WP_DEBUG and Error Display",
+    "severity": "critical",
+    "category": "application-security",
+    "description": "Debug mode exposes paths, database names, and stack traces that aid attackers.",
+    "implementation": {
+      "apache": "wp-config.php: define('WP_DEBUG', false); define('WP_DEBUG_DISPLAY', false); ini_set('display_errors', 0);",
+      "nginx": "Same wp-config.php settings",
+      "linux": "grep -i 'WP_DEBUG\\|display_errors' wp-config.php"
+    },
+    "verification": "Intentionally trigger an error; generic message shown, no path disclosure",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://wordpress.org/support/article/debugging-in-wordpress/"
+    ]
+  },
+  {
+    "id": "wp-disable-file-edit",
+    "title": "Disable Theme and Plugin File Editor",
+    "severity": "critical",
+    "category": "application-security",
+    "description": "Disallow editing files through WordPress admin to limit damage from compromised accounts.",
+    "implementation": {
+      "apache": "wp-config.php: define('DISALLOW_FILE_EDIT', true);",
+      "nginx": "wp-config.php: define('DISALLOW_FILE_EDIT', true);",
+      "linux": "sed -i \"/define('WP_DEBUG'/a define('DISALLOW_FILE_EDIT', true);\" wp-config.php"
+    },
+    "verification": "Appearance > Editor and Plugins > Editor show disabled message",
+    "cwe": [
+      "CWE-250"
+    ],
+    "references": [
+      "https://wordpress.org/support/article/hardening-wordpress/#disable-file-editing"
+    ]
+  },
+  {
+    "id": "wp-ssl-force",
+    "title": "Force HTTPS/SSL for All Pages",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Redirect HTTP to HTTPS and enable HSTS. Set FORCE_SSL_ADMIN in wp-config.php.",
+    "implementation": {
+      "apache": "RewriteCond %{QUERY_STRING} base64_encode.*(.*) [OR]; RewriteCond %{QUERY_STRING} (.*) { [OR] -> deny",
+      "nginx": "return 301 https://host$request_uri; add_header Strict-Transport-Security",
+      "linux": "certbot --nginx -d example.com"
+    },
+    "verification": "Access http:// redirects to https://; admin login enforces SSL",
+    "cwe": [
+      "CWE-319"
+    ],
+    "references": [
+      "https://wordpress.org/support/article/why-should-i-use-https/"
+    ]
+  },
+  {
+    "id": "wp-security-headers",
+    "title": "Add HTTP Security Headers",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Configure X-Frame-Options, X-XSS-Protection, X-Content-Type-Options, Referrer-Policy, and CSP.",
+    "implementation": {
+      "apache": "Header set X-Frame-Options SAMEORIGIN; Header set X-Content-Type-Options nosniff; Header set Referrer-Policy",
+      "nginx": "add_header X-Frame-Options SAMEORIGIN; add_header X-Content-Type-Options nosniff",
+      "linux": "curl -I https://example.com | grep -i x-frame"
+    },
+    "verification": "curl -I shows all security headers present",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://securityheaders.com/"
+    ]
+  },
+  {
+    "id": "wp-backup-schedule",
+    "title": "Implement Automated Backups",
+    "severity": "medium",
+    "category": "data-protection",
+    "description": "Automate daily backups of database and files using UpdraftPlus or WP CLI cron jobs.",
+    "implementation": {
+      "apache": "Install UpdraftPlus plugin and schedule daily backups to remote storage",
+      "nginx": "Same plugin setup via WordPress admin",
+      "linux": "0 2 * * * wp db export /backup/wp_DATE.sql --allow-root --path=/var/www/html"
+    },
+    "verification": "Backup files exist with recent timestamps in configured storage",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://wordpress.org/plugins/updraftplus/"
+    ]
+  },
+  {
+    "id": "wp-plugin-audit",
+    "title": "Audit and Remove Unused Plugins",
+    "severity": "high",
+    "category": "application-security",
+    "description": "Deactivate and delete unused plugins. Keep all active plugins updated. Check for known vulnerabilities.",
+    "implementation": {
+      "apache": "WordPress admin: Plugins > Installed Plugins > delete inactive plugins",
+      "nginx": "Same via WordPress admin dashboard",
+      "linux": "wp plugin list --status=inactive --path=/var/www/html; wp plugin delete inactive-slug"
+    },
+    "verification": "Only required plugins are active and updated to latest version",
+    "cwe": [
+      "CWE-1104"
+    ],
+    "references": [
+      "https://wordpress.org/plugins/wpvulnerability/"
+    ]
+  },
+  {
+    "id": "wp-theme-audit",
+    "title": "Remove Unused Themes and Child Theme Security",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Delete unused themes, especially default WordPress themes. Keep parent and child themes updated.",
+    "implementation": {
+      "apache": "Appearance > Themes > delete inactive themes",
+      "nginx": "Same via WordPress admin dashboard",
+      "linux": "rm -rf /var/www/html/wp-content/themes/twentytwentyone /var/www/html/wp-content/themes/twentytwentytwo"
+    },
+    "verification": "Only active theme (and parent if child) remains in wp-content/themes",
+    "cwe": [
+      "CWE-1104"
+    ],
+    "references": [
+      "https://wordpress.org/support/article/using-themes/"
+    ]
+  },
+  {
+    "id": "wp-admin-2fa",
+    "title": "Enable Two-Factor Authentication",
+    "severity": "high",
+    "category": "authentication",
+    "description": "Require 2FA for administrator accounts using plugins like Wordfence or Two Factor.",
+    "implementation": {
+      "apache": "Install Two Factor or Wordfence Login Security plugin; configure TOTP for admin role",
+      "nginx": "Same plugin setup via WordPress admin",
+      "linux": "wp plugin install two-factor --activate"
+    },
+    "verification": "Admin login requires TOTP code or backup code after password",
+    "cwe": [
+      "CWE-308"
+    ],
+    "references": [
+      "https://wordpress.org/plugins/two-factor/"
+    ]
+  },
+  {
+    "id": "wp-login-url-obfuscate",
+    "title": "Change Default Login URL",
+    "severity": "medium",
+    "category": "access-control",
+    "description": "Obfuscate /wp-login.php and /wp-admin to reduce brute force attack surface.",
+    "implementation": {
+      "apache": "Install WPS Hide Login or Change wp-admin Login plugin; set custom slug",
+      "nginx": "Same - plugin handles URL routing",
+      "linux": "wp plugin install wps-hide-login --activate"
+    },
+    "verification": "Accessing /wp-login.php redirects to 404; new custom URL works for login",
+    "cwe": [
+      "CWE-307"
+    ],
+    "references": [
+      "https://wordpress.org/plugins/wps-hide-login/"
+    ]
+  },
+  {
+    "id": "wp-database-repair",
+    "title": "Enable Database Repair and Optimize",
+    "severity": "low",
+    "category": "database-security",
+    "description": "Add repair constant to wp-config.php for emergency table repair. Remove after use.",
+    "implementation": {
+      "apache": "wp-config.php: define('WP_ALLOW_REPAIR', true); visit /wp-admin/maint/repair.php",
+      "nginx": "Same wp-config.php constant",
+      "linux": "wp db repair --path=/var/www/html"
+    },
+    "verification": "Database tables optimized and repaired; constant removed after operation",
+    "cwe": [
+      "CWE-396"
+    ],
+    "references": [
+      "https://wordpress.org/support/article/editing-wp-config-php/#automatic-database-optimizing"
+    ]
+  },
+  {
+    "id": "wp-version-hide",
+    "title": "Hide WordPress Version Number",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Remove WordPress version from RSS feeds and meta generator to prevent targeted attacks.",
+    "implementation": {
+      "apache": "functions.php: remove_action('wp_head', 'wp_generator'); add_filter('the_generator', '__return_empty_string');",
+      "nginx": "Same functions.php code",
+      "linux": "grep -r 'wp_generator' /var/www/html/wp-content/themes/"
+    },
+    "verification": "View page source does not contain meta generator WordPress version tag",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://wordpress.org/support/article/hardening-wordpress/#security-through-obscurity"
+    ]
+  },
+  {
+    "id": "wp-upload-execute-deny",
+    "title": "Prevent Execution of PHP in Uploads Directory",
+    "severity": "critical",
+    "category": "os-security",
+    "description": "Uploaded files in /wp-content/uploads should never be executable as PHP.",
+    "implementation": {
+      "apache": "Add .htaccess in uploads: php_flag engine off; or FilesMatch deny all for .php",
+      "nginx": "location /wp-content/uploads/ { location ~ .php$ { deny all; } }",
+      "linux": "chmod 644 /var/www/html/wp-content/uploads -R"
+    },
+    "verification": "Upload PHP file to uploads; direct access returns 403",
+    "cwe": [
+      "CWE-434"
+    ],
+    "references": [
+      "https://wordpress.org/support/article/hardening-wordpress/#wp-contentuploads"
+    ]
+  },
+  {
+    "id": "wp-block-bad-requests",
+    "title": "Block Bad Requests and Query Strings",
+    "severity": "medium",
+    "category": "network-security",
+    "description": "Block requests containing eval, base64, and common SQLi patterns at the server level.",
+    "implementation": {
+      "apache": "RewriteCond %{QUERY_STRING} base64_encode.*(.*) [OR]; RewriteCond %{QUERY_STRING} (.*) { [OR] -> deny",
+      "nginx": "if ($query_string ~* base64_encode|GLOBALS|REQUEST|union.*select) { return 403; }",
+      "linux": "sed -i '/<IfModule mod_rewrite.c>/a RewriteCond rule' .htaccess"
+    },
+    "verification": "Request with ?eval=base64_encode returns 403",
+    "cwe": [
+      "CWE-89"
+    ],
+    "references": [
+      "https://perishablepress.com/6g-firewall/"
+    ]
+  },
+  {
+    "id": "wp-limit-login",
+    "title": "Implement Login Attempt Limiting",
+    "severity": "high",
+    "category": "authentication",
+    "description": "Block repeated failed login attempts to prevent brute force and credential stuffing.",
+    "implementation": {
+      "apache": "Install Wordfence or Limit Login Attempts Reloaded plugin; set to 3 retries then 1 hour lockout",
+      "nginx": "Same plugin approach or nginx limit_req",
+      "linux": "wp plugin install limit-login-attempts-reloaded --activate"
+    },
+    "verification": "3 failed logins trigger lockout message and email notification",
+    "cwe": [
+      "CWE-307"
+    ],
+    "references": [
+      "https://wordpress.org/plugins/limit-login-attempts-reloaded/"
+    ]
+  },
+  {
+    "id": "wp-cors-policy",
+    "title": "Restrict CORS for REST API and AJAX",
+    "severity": "medium",
+    "category": "network-security",
+    "description": "Configure allowed origins for WordPress REST API and admin-ajax to prevent CSRF and data exfil.",
+    "implementation": {
+      "apache": "Header set Access-Control-Allow-Origin https://example.com",
+      "nginx": "add_header Access-Control-Allow-Origin https://example.com",
+      "linux": "Add code to functions.php: add_action('init', 'send_cors_headers')"
+    },
+    "verification": "Cross-origin request from unauthorized domain returns error",
+    "cwe": [
+      "CWE-942"
+    ],
+    "references": [
+      "https://developer.wordpress.org/rest-api/extending-the-rest-api/"
+    ]
+  },
+  {
+    "id": "wp-cookie-settings",
+    "title": "Harden Cookie Settings with HttpOnly and Secure Flags",
+    "severity": "high",
+    "category": "data-protection",
+    "description": "Set COOKIE_DOMAIN, COOKIEPATH, and session cookie flags (HttpOnly, Secure, SameSite).",
+    "implementation": {
+      "apache": "wp-config.php: ini_set('session.cookie_httponly', 1); ini_set('session.cookie_secure', 1);",
+      "nginx": "Same wp-config.php settings",
+      "linux": "grep -i 'cookie_httponly' wp-config.php"
+    },
+    "verification": "Browser dev tools show httponly and secure flags on auth cookies",
+    "cwe": [
+      "CWE-1004"
+    ],
+    "references": [
+      "https://developer.wordpress.org/reference/hooks/auth_cookie_expiration/"
+    ]
+  },
+  {
+    "id": "wp-disable-trackbacks",
+    "title": "Disable Trackbacks and Pingbacks",
+    "severity": "medium",
+    "category": "network-security",
+    "description": "Trackbacks and pingbacks are rarely used and are a common DDoS and spam vector.",
+    "implementation": {
+      "apache": "Settings > Discussion > uncheck Allow link notifications; code in functions.php to disable xmlrpc",
+      "nginx": "Same WordPress setting and functions.php code",
+      "linux": "wp option update default_pingback_status closed"
+    },
+    "verification": "Posts show pingbacks/trackbacks disabled; XMLRPC pingback methods unavailable",
+    "cwe": [
+      "CWE-770"
+    ],
+    "references": [
+      "https://wordpress.org/support/article/trackbacks-and-pingbacks/"
+    ]
+  },
+  {
+    "id": "wp-cron-replace",
+    "title": "Replace WP-Cron with Server Cron",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Disable wp-cron.php triggered on page load; use real server cron for better performance and security.",
+    "implementation": {
+      "apache": "wp-config.php: define('DISABLE_WP_CRON', true); cron: */5 * * * * wget -q -O - https://example.com/wp-cron.php > /dev/null 2>&1",
+      "nginx": "Same wp-config.php constant; use cron with curl or wget",
+      "linux": "crontab -e -> add line: */5 * * * * wget -qO- /dev/null https://example.com/wp-cron.php"
+    },
+    "verification": "No wp-cron.php calls on page loads; only every 5 minutes via cron",
+    "cwe": [
+      "CWE-770"
+    ],
+    "references": [
+      "https://developer.wordpress.org/plugins/cron/hooking-wp-cron-into-the-system-task-scheduler/"
+    ]
+  },
+  {
+    "id": "wp-wpcli-security",
+    "title": "Secure WP-CLI Access",
+    "severity": "medium",
+    "category": "access-control",
+    "description": "Restrict WP-CLI to specific users, require SSH key authentication, and log all CLI commands.",
+    "implementation": {
+      "apache": "Not applicable - WP-CLI runs on shell",
+      "nginx": "Not applicable - WP-CLI runs on shell",
+      "linux": "sudo chown root:root /usr/local/bin/wp; sudo chmod 755 /usr/local/bin/wp; allow only deploy user"
+    },
+    "verification": "Only designated deploy user can execute wp commands; others get permission denied",
+    "cwe": [
+      "CWE-284"
+    ],
+    "references": [
+      "https://make.wordpress.org/cli/handbook/"
+    ]
+  }
+]

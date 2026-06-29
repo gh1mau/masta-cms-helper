@@ -1,0 +1,382 @@
+[
+  {
+    "id": "win-lsp-password",
+    "title": "Configure Local Security Policy - Password Complexity",
+    "severity": "high",
+    "category": "authentication",
+    "description": "Enforce strong password policies: minimum length, complexity, expiration, and history.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "secpol.msc > Account Policies > Password Policy: Minimum password length 14; Complexity enabled; Max age 60 days; History 24"
+    },
+    "verification": "Attempt to create weak password; system rejects it",
+    "cwe": [
+      "CWE-521"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/password-policy"
+    ]
+  },
+  {
+    "id": "win-account-lockout",
+    "title": "Configure Account Lockout Policy",
+    "severity": "high",
+    "category": "authentication",
+    "description": "Lock accounts after failed login attempts to prevent brute force attacks.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "secpol.msc > Account Policies > Account Lockout Policy: lockout threshold 5; duration 15 minutes; reset counter 15 minutes"
+    },
+    "verification": "5 failed login attempts lock account; admin must unlock or wait 15 minutes",
+    "cwe": [
+      "CWE-307"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/account-lockout-policy"
+    ]
+  },
+  {
+    "id": "win-defender-enable",
+    "title": "Enable and Configure Windows Defender",
+    "severity": "critical",
+    "category": "os-security",
+    "description": "Ensure Windows Defender Antivirus and Firewall are enabled and up to date.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Windows Security > Virus & threat protection > Manage settings > Real-time protection ON; Cloud-delivered protection ON; Automatic sample submission ON"
+    },
+    "verification": "Get-MpComputerStatus shows RealTimeProtectionEnabled: True; AntiSpywareEnabled: True",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows/security/threat-protection/microsoft-defender-antivirus/"
+    ]
+  },
+  {
+    "id": "win-firewall-rules",
+    "title": "Harden Windows Firewall Rules",
+    "severity": "critical",
+    "category": "network-security",
+    "description": "Enable firewall on all profiles. Default deny inbound. Only allow necessary ports.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "wf.msc > Inbound rules: Block default. Allow only 80, 443, 3389 (if needed). Enable logging."
+    },
+    "verification": "netsh advfirewall show allprofiles shows Firewall Policy: BlockInbound,AllowOutbound for all profiles",
+    "cwe": [
+      "CWE-284"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows/security/threat-protection/windows-firewall/"
+    ]
+  },
+  {
+    "id": "win-audit-policy",
+    "title": "Enable Comprehensive Audit Policy",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Audit logon events, object access, policy changes, privilege use, and process tracking.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "secpol.msc > Advanced Audit Policy Configuration: Audit Logon, Object Access, Policy Change, Privilege Use, Account Management"
+    },
+    "verification": "Event Viewer > Security shows events for failed logins, privilege escalations",
+    "cwe": [
+      "CWE-778"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/"
+    ]
+  },
+  {
+    "id": "win-secure-services",
+    "title": "Disable Unnecessary Services",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Disable services not needed for web server role: Telnet, FTP, Print Spooler, Fax, Windows Search.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "services.msc: Stop and Disable Telnet, FTP, Print Spooler, Fax, Windows Search, Remote Registry"
+    },
+    "verification": "Get-Service shows disabled/ stopped for listed services; netstat shows no listening on 21, 23",
+    "cwe": [
+      "CWE-1092"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows-server/security/windows-services/security-guidelines-for-disabling-system-services-in-windows-server"
+    ]
+  },
+  {
+    "id": "win-powershell-execution",
+    "title": "Configure PowerShell Execution Policy and Constrained Language Mode",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Set execution policy to AllSigned or RemoteSigned. Enable constrained language mode if possible.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Set-ExecutionPolicy AllSigned; Enable AppLocker/WDAC for constrained language mode"
+    },
+    "verification": "Run untrusted .ps1 script; execution blocked or prompts for confirmation",
+    "cwe": [
+      "CWE-250"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy"
+    ]
+  },
+  {
+    "id": "win-amsi",
+    "title": "Ensure AMSI Providers are Active",
+    "severity": "high",
+    "category": "application-security",
+    "description": "AntiMalware Scan Interface (AMSI) scans scripts and commands for malicious content.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Windows Defender AMSI is enabled by default; verify no 3rd-party AMSI is disabled; check registry HKLM\\Software\\Microsoft\\AMSI"
+    },
+    "verification": "Running known AMSI test string triggers detection; Windows Defender shows alert",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows/win32/amsi/how-amsi-helps"
+    ]
+  },
+  {
+    "id": "win-uac-secure",
+    "title": "Enforce User Account Control (UAC)",
+    "severity": "high",
+    "category": "access-control",
+    "description": "Set UAC to highest level (Always notify) to prevent unauthorized privilege escalation.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Regedit: HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System > ConsentPromptBehaviorAdmin = 2; EnableLUA = 1"
+    },
+    "verification": "Running admin-level command triggers UAC prompt; non-admin cannot bypass",
+    "cwe": [
+      "CWE-250"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows/security/identity-protection/user-account-control/"
+    ]
+  },
+  {
+    "id": "win-app-whitelist",
+    "title": "Implement Application Whitelisting (AppLocker or WDAC)",
+    "severity": "high",
+    "category": "access-control",
+    "description": "Only allow approved applications and scripts to execute. Block unknown or untrusted code.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Configure AppLocker with publisher/path/hash rules for web server processes; OR deploy WDAC policy"
+    },
+    "verification": "Attempt to run unapproved executable or script; blocked by AppLocker/WDAC",
+    "cwe": [
+      "CWE-250"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows/security/threat-protection/windows-defender-application-control/"
+    ]
+  },
+  {
+    "id": "win-event-forwarding",
+    "title": "Configure Windows Event Forwarding (WEF)",
+    "severity": "medium",
+    "category": "os-security",
+    "description": "Forward critical security events to centralized collector for SIEM correlation and tamper protection.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Group Policy: Computer Configuration > Administrative Templates > Windows Components > Event Forwarding > Configure target subscription manager"
+    },
+    "verification": "Collector receives forwarded events from server; Event Viewer shows subscription status",
+    "cwe": [
+      "CWE-778"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows/security/threat-protection/use-windows-event-forwarding"
+    ]
+  },
+  {
+    "id": "win-hypervisor-protect",
+    "title": "Enable Hypervisor-protected Code Integrity (HVCI)",
+    "severity": "medium",
+    "category": "os-security",
+    "description": "HVCI (Memory Integrity) prevents kernel-mode drivers and code from being injected by malware.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Windows Security > Device security > Core isolation > Memory Integrity: ON"
+    },
+    "verification": "msinfo32 > System Information > Device Security shows Memory Integrity: ON",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows/security/threat-protection/device-guard/enable-virtualization-based-protection-of-code-integrity"
+    ]
+  },
+  {
+    "id": "win-credential-guard",
+    "title": "Enable Windows Defender Credential Guard",
+    "severity": "high",
+    "category": "data-protection",
+    "description": "Isolate credential storage using virtualization to prevent credential theft from LSASS.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Group Policy: Computer Configuration > Administrative Templates > System > Device Guard > Turn on Virtualization Based Security > Enable; UEFI Lock"
+    },
+    "verification": "msinfo32 shows Device Guard > Credential Guard: Running",
+    "cwe": [
+      "CWE-522"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows/security/identity-protection/credential-guard/"
+    ]
+  },
+  {
+    "id": "win-secure-admin-tools",
+    "title": "Restrict Administrative Tools Access",
+    "severity": "medium",
+    "category": "access-control",
+    "description": "Use Admin Approval Mode and restrict access to admin tools like Computer Management and Regedit.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Group Policy: User Configuration > Administrative Templates > System > Prevent access to registry editing tools; similar for CMD and PowerShell for non-admins"
+    },
+    "verification": "Non-admin user cannot open regedit or cmd; receives access denied message",
+    "cwe": [
+      "CWE-284"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/"
+    ]
+  },
+  {
+    "id": "win-bitlocker",
+    "title": "Enable BitLocker Drive Encryption",
+    "severity": "high",
+    "category": "data-protection",
+    "description": "Encrypt system and data drives with BitLocker to protect against physical theft.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "BitLocker Drive Encryption > Turn on BitLocker for OS and data drives; save recovery key to AD or secure location"
+    },
+    "verification": "manage-bde -status shows Protection Status: On for required drives",
+    "cwe": [
+      "CWE-311"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows/security/information-protection/bitlocker/"
+    ]
+  },
+  {
+    "id": "win-tls-config",
+    "title": "Configure Schannel TLS/SSL Hardening",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Disable SSL 2.0, SSL 3.0, TLS 1.0, TLS 1.1 via registry. Enable TLS 1.2 and 1.3 only.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Registry: HKLM\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\SCHANNEL\\Protocols\\TLS 1.0\\Client: DisabledByDefault = 1, Enabled = 0; Same for TLS 1.1, SSL 2.0, SSL 3.0"
+    },
+    "verification": "SSL Labs test shows only TLS 1.2+; IISCrypto tool shows protocols disabled",
+    "cwe": [
+      "CWE-319"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/operations/manage-ssl-protocols-in-ad-fs"
+    ]
+  },
+  {
+    "id": "win-ie-enhanced",
+    "title": "Disable Internet Explorer Enhanced Security if Not Needed",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "For web servers, IE is not needed. Remove or harden IE settings if present.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Server Manager > Local Server > IE Enhanced Security Configuration: Off for users and administrators"
+    },
+    "verification": "Internet Explorer opens without security warning spam; ideally use Edge or no browser on server",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows-server/administration/server-manager/"
+    ]
+  },
+  {
+    "id": "win-harden-iis-pool",
+    "title": "Harden IIS Application Pool Identity",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Use ApplicationPoolIdentity instead of NetworkService or LocalSystem to sandbox IIS processes.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "IIS Manager > Application Pools > site_pool > Advanced Settings > Identity: ApplicationPoolIdentity; assign unique pool per site"
+    },
+    "verification": "Task Manager > Details > w3wp.exe runs under IIS APPPOOL\\pool_name; cannot access other sites files",
+    "cwe": [
+      "CWE-250"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/iis/manage/configuring-security/application-pool-identities"
+    ]
+  },
+  {
+    "id": "win-rdp-restrict",
+    "title": "Secure and Restrict RDP Access",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Use Network Level Authentication, require gateway, limit RDP to specific IPs, and enable certificate-based auth.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "System Properties > Remote > Allow connections only from computers running Remote Desktop with Network Level Authentication; Group Policy: Require TLS 1.2 for RDP"
+    },
+    "verification": "RDP session requires certificate; connection from unauthorized IP blocked by firewall",
+    "cwe": [
+      "CWE-306"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows-server/remote/remote-desktop-services/welcome-to-rds/"
+    ]
+  },
+  {
+    "id": "win-cve-patching",
+    "title": "Enable Automatic Windows Updates and Patching",
+    "severity": "critical",
+    "category": "os-security",
+    "description": "Configure Windows Update to automatically install critical and security updates.",
+    "implementation": {
+      "apache": "Not applicable",
+      "nginx": "Not applicable",
+      "linux": "Settings > Windows Update > Advanced options > Automatic: ON; Configure WSUS or Windows Update for Business if managed"
+    },
+    "verification": "Windows Update history shows recent security patches installed; no critical CVEs unpatched >30 days",
+    "cwe": [
+      "CWE-937"
+    ],
+    "references": [
+      "https://docs.microsoft.com/en-us/windows/deployment/update/"
+    ]
+  }
+]

@@ -1,0 +1,198 @@
+/* Mobile Responsiveness */
+@media (max-width: 1200px) {
+  .app-container {
+    grid-template-columns: 260px 1fr 320px;
+  }
+}
+
+@media (max-width: 992px) {
+  .app-container {
+    grid-template-columns: 220px 1fr 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr auto auto;
+    grid-template-areas:
+      "header"
+      "sidebar"
+      "main"
+      "feeds"
+      "footer";
+    padding: 0 0.75rem;
+  }
+
+  header .menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -320px;
+    width: 280px;
+    height: 100vh;
+    background: var(--bg-secondary);
+    border-right: 1px solid rgba(0, 240, 255, 0.2);
+    z-index: 100;
+    padding: 1rem;
+    overflow-y: auto;
+    transition: left 0.3s ease;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 99;
+    backdrop-filter: blur(2px);
+  }
+
+  .sidebar-overlay.visible {
+    display: block;
+  }
+
+  .feeds-panel {
+    max-width: 100%;
+  }
+
+  footer {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+
+  footer .social-links {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  header h1 {
+    font-size: 1.1rem;
+  }
+
+  header .logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .card {
+    padding: 0.75rem;
+  }
+
+  .checklist-header {
+    padding: 0.6rem 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .checklist-title {
+    font-size: 0.8rem;
+  }
+
+  .severity-badge {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.4rem;
+  }
+
+  .custom-checkbox {
+    width: 18px;
+    height: 18px;
+  }
+
+  .risk-score-value {
+    font-size: 2.2rem;
+  }
+
+  .btn {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .filter-bar {
+    gap: 0.3rem;
+  }
+
+  .filter-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* Print styles for checklist export */
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .app-container {
+    display: block;
+  }
+
+  .sidebar,
+  .feeds-panel,
+  header .menu-toggle,
+  .btn,
+  .cve-feed,
+  footer .social-links,
+  #radarChartContainer {
+    display: none !important;
+  }
+
+  .main-content {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .checklist-item {
+    border: 1px solid #ccc;
+    page-break-inside: avoid;
+    margin-bottom: 0.5rem;
+  }
+
+  .checklist-details {
+    max-height: none !important;
+    padding: 0.5rem !important;
+  }
+
+  .implementation-block {
+    border: 1px solid #ddd;
+    background: #f5f5f5 !important;
+    color: #000 !important;
+  }
+
+  footer {
+    border-top: 1px solid #ccc;
+    color: #666;
+    font-size: 0.75rem;
+  }
+
+  .card {
+    background: #fff !important;
+    border: 1px solid #ccc;
+    box-shadow: none;
+  }
+
+  header {
+    border-bottom: 2px solid #000;
+  }
+
+  header h1 {
+    color: #000;
+  }
+
+  .severity-critical { background: #fdd; color: #900; border: 1px solid #900; }
+  .severity-high { background: #ffd; color: #c60; border: 1px solid #c60; }
+  .severity-medium { background: #def; color: #069; border: 1px solid #069; }
+  .severity-low { background: #dfd; color: #060; border: 1px solid #060; }
+}

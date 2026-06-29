@@ -1,0 +1,197 @@
+{
+  "name": "Joomla Security Hardening",
+  "category": "cms",
+  "items": [
+    {
+      "id": "j1",
+      "title": "Protect .htaccess and configuration files",
+      "severity": "critical",
+      "category": "server-config",
+      "description": "Prevent direct access to sensitive files containing configuration data such as database credentials.",
+      "threat": "Information Disclosure - Attackers can read configuration files to obtain database credentials and other sensitive data.",
+      "impact": "Complete site compromise, database breach, data theft.",
+      "verification": "Access to /.htaccess, /configuration.php, or /administrator/components/com_config/ returns 403 Forbidden",
+      "implementation": {
+        "apache": "<FilesMatch \"^\\.(ht|ini|phps|fla|psd|log|sh)\">\n  Require all denied\n</FilesMatch>\n\n<Files \"configuration.php\">\n  Require all denied\n</Files>",
+        "nginx": "location ~* /\\.(ht|ini|phps|fla|psd|log|sh)$ { deny all; return 403; }\n\nlocation ~ configuration.php { deny all; return 403; }"
+      },
+      "mitigationSteps": [
+        "1. Create/rename .htaccess file in root directory",
+        "2. Add FilesMatch directive to block sensitive extensions",
+        "3. Add specific block for configuration.php",
+        "4. Test by attempting to access configuration.php directly",
+        "5. Monitor Apache/Nginx error logs for blocked attempts"
+      ],
+      "testing": [
+        "curl -I https://yoursite.com/configuration.php should return 403",
+        "curl -I https://yoursite.com/.htaccess should return 403",
+        "Check server logs: grep \"configuration.php\" /var/log/apache2/error.log"
+      ],
+      "rollback": "Remove or comment out the FilesMatch and Files blocks in .htaccess or nginx config, then reload web server.",
+      "tools": ["cURL", "Browser DevTools", "Web Server Logs"],
+      "cwe": ["CWE-200", "CWE-548"],
+      "references": ["https://docs.joomla.org/Security_Checklist", "https://owasp.org/www-project-top-ten/"]
+    },
+    {
+      "id": "j2",
+      "title": "Change default administrator username",
+      "severity": "critical",
+      "category": "authentication",
+      "description": "Never use 'admin' as super user. Create new super user with unique name and delete the default.",
+      "threat": "Brute Force Attacks - Default usernames are the first target for automated login attacks.",
+      "impact": "Unauthorized admin access, site defacement, malware injection.",
+      "verification": "Super user has unique username (not 'admin', 'administrator', 'root', 'webmaster')",
+      "implementation": {
+        "apache": "# Step 1: Users > Manage > Add New User\n# Step 2: Set Super Users group\n# Step 3: Logout and login with new account\n# Step 4: Delete old 'admin' user\n# Step 5: Reassign content if prompted",
+        "nginx": "# Same process - CMS-level configuration"
+      },
+      "mitigationSteps": [
+        "1. Login to Joomla admin with existing admin account",
+        "2. Navigate to Users > Manage",
+        "3. Click 'New' button",
+        "4. Fill: Name, Username (unique, 12+ chars), Email, Password (strong)",
+        "5. Set User Group to 'Super Users'",
+        "6. Logout and login with new account",
+        "7. Users > Manage > Click 'admin' > Delete",
+        "8. Choose to reassign created items to new user"
+      ],
+      "testing": [
+        "Attempt login with 'admin' - should fail",
+        "Verify new super user can access all admin functions",
+        "Check Users table in database: SELECT username FROM jos_users WHERE gid=8"
+      ],
+      "rollback": "If new user has issues, create another super user via database or use emergency password reset.",
+      "tools": ["Joomla Admin Panel", "phpMyAdmin (if needed)"],
+      "cwe": ["CWE-798", "CWE-307"],
+      "references": ["https://docs.joomla.org/Security", "https://docs.joomla.org/How_do_you_recover_or_reset_your_admin_password%3F"]
+    },
+    {
+      "id": "j3",
+      "title": "Enable two-factor authentication",
+      "severity": "critical",
+      "category": "authentication",
+      "description": "Require TOTP for all administrator accounts.",
+      "threat": "Credential Theft - Stolen passwords can be used if no second factor required.",
+      "impact": "Full admin compromise even with strong password.",
+      "verification": "Login prompts for TOTP code after password",
+      "implementation": {
+        "apache": "# System > Global Configuration > Users > Two Factor Authentication\n# Enable for backend users",
+        "nginx": "# Same configuration"
+      },
+      "mitigationSteps": [
+        "1. Login as super user",
+        "2. System > Global Configuration > Users",
+        "3. Enable Two Factor Authentication",
+        "4. Select 'Google Authenticator' as method",
+        "5. Scan QR code with authenticator app",
+        "6. Save backup codes securely",
+        "7. Logout and test 2FA login"
+      ],
+      "testing": [
+        "Login with password - should request TOTP",
+        "Try wrong TOTP code - should fail",
+        "Use backup code - should work"
+      ],
+      "rollback": "Disable 2FA from user profile or use backup codes.",
+      "tools": ["Google Authenticator App", "KeePassXC (backup codes)"],
+      "cwe": ["CWE-308"],
+      "references": ["https://docs.joomla.org/J3.x:Two_Factor_Authentication"]
+    },
+    {
+      "id": "j4",
+      "title": "Update to latest stable version",
+      "severity": "critical",
+      "category": "application-security",
+      "description": "Keep Joomla core, extensions, and templates updated to patch security vulnerabilities.",
+      "threat": "Exploit of Known Vulnerabilities - Old versions have public exploits.",
+      "impact": "Remote code execution, data breach, complete site compromise.",
+      "verification": "No available updates in Components > Joomla! Update",
+      "implementation": {
+        "apache": "# Backup first!\n# Components > Joomla! Update > Check for Updates\n# Install latest stable version",
+        "nginx": "# Same process"
+      },
+      "mitigationSteps": [
+        "1. Create full backup (files + database)",
+        "2. Check Components > Joomla! Update",
+        "3. Read release notes for breaking changes",
+        "4. Test update on staging environment",
+        "5. Apply update to production",
+        "6. Clear all caches",
+        "7. Verify site functionality"
+      ],
+      "testing": [
+        "Check System > System Information shows latest version",
+        "No update notifications in admin",
+        "Site functions normally"
+      ],
+      "rollback": "Restore from backup if site breaks after update.",
+      "tools": ["Akeeba Backup", "Staging Environment"],
+      "cwe": ["CWE-1104"],
+      "references": ["https://docs.joomla.org/Security", "https://developer.joomla.org/security-centre.html"]
+    },
+    {
+      "id": "j5",
+      "title": "Use strong database credentials",
+      "severity": "critical",
+      "category": "database-security",
+      "description": "Database user should have complex password and minimal privileges.",
+      "threat": "Database Compromise - Weak passwords can be brute forced.",
+      "impact": "Data theft, data corruption, site compromise.",
+      "verification": "Password length >20 chars with random characters",
+      "implementation": {
+        "apache": "# Generate: openssl rand -base64 24\n# Update in configuration.php\n# Grant only required permissions",
+        "nginx": "# Same process"
+      },
+      "mitigationSteps": [
+        "1. Generate strong password: openssl rand -base64 24",
+        "2. Update database user password",
+        "3. Update configuration.php with new credentials",
+        "4. Revoke unnecessary database privileges",
+        "5. Test site functionality",
+        "6. Store password in password manager"
+      ],
+      "testing": [
+        "Can connect to database",
+        "Site loads without errors",
+        "Cannot connect with old password"
+      ],
+      "rollback": "Restore configuration.php from backup and revert database password.",
+      "tools": ["OpenSSL", "phpMyAdmin", "MySQL CLI"],
+      "cwe": ["CWE-798"],
+      "references": ["https://docs.joomla.org/Security_Checklist/4-Where_can_you_learn_more_about_file_permissions"]
+    },
+    {
+      "id": "j6",
+      "title": "Enable HTTPS for entire site",
+      "severity": "high",
+      "category": "network-security",
+      "description": "Force SSL for all frontend and backend pages.",
+      "threat": "Man-in-the-Middle Attacks - HTTP traffic can be intercepted and modified.",
+      "impact": "Session hijacking, credential theft, data theft.",
+      "verification": "All URLs redirect to https:// and show secure padlock",
+      "implementation": {
+        "apache": "# System > Global Configuration > Server > Force HTTPS: Entire Site",
+        "nginx": "return 301 https://$server_name$request_uri;"
+      },
+      "mitigationSteps": [
+        "1. Obtain SSL certificate (Let's Encrypt recommended)",
+        "2. Configure web server for HTTPS",
+        "3. Joomla: System > Global Configuration > Server",
+        "4. Set Force HTTPS to 'Entire Site'",
+        "5. Test HTTP redirects to HTTPS",
+        "6. Update all internal links to https://",
+        "7. Test SSL rating at ssllabs.com"
+      ],
+      "testing": [
+        "HTTP requests redirect to HTTPS",
+        "SSL Labs rating A+ or A",
+        "No mixed content warnings in browser",
+        "CMS login shows secure connection"
+      ],
+      "rollback": "Remove SSL configuration from web server and disable Force HTTPS in Joomla.",
+      "tools": ["SSL Labs Test", "Browser DevTools"],
+      "cwe": ["CWE-319"],
+      "references": ["https://docs.joomla.org/Enabling_HTTPS"]
+    }
+  ]
+}

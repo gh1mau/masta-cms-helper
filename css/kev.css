@@ -1,0 +1,359 @@
+/* ==========================================
+   CISA KEV Vulnerability Display Styles
+   ========================================== */
+
+/* Subtitle badge next to panel title */
+.kev-subtitle {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--accent-cyan);
+  margin-left: 8px;
+  padding: 2px 10px;
+  border: 1px solid var(--accent-cyan);
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+  opacity: 0.9;
+  display: inline-block;
+}
+
+/* Live data fetching indicator */
+#kev-catalog-info .fa-satellite-dish {
+  margin-right: 6px;
+  color: var(--accent-cyan);
+}
+
+/* Main KEV Panel */
+.kev-panel {
+  background: var(--panel-bg);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.kev-panel .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.kev-panel .panel-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.kev-panel .panel-title i {
+  color: var(--accent-danger);
+}
+
+/* KEV Catalog Info */
+#kev-catalog-info {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* KEV Count */
+#kev-count {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  background: var(--bg-tertiary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+}
+
+/* Loading State */
+.loading-kev {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--text-muted);
+  gap: 1rem;
+}
+
+.loading-kev i {
+  font-size: 2rem;
+  animation: spin 1s linear infinite;
+}
+
+/* Year Group Styling */
+.kev-year-group {
+  margin-bottom: 2rem;
+}
+
+.kev-year-group:last-child {
+  margin-bottom: 0;
+}
+
+.kev-year-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.kev-year-badge {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+  color: var(--bg-primary);
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+}
+
+.kev-year-count {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Grid Layout */
+.kev-year-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+/* KEV Card */
+.kev-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.kev-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.kev-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--accent-muted);
+}
+
+.kev-card.critical::before { background: var(--accent-danger); }
+.kev-card.high::before { background: var(--accent-warning); }
+.kev-card.medium::before { background: var(--accent-cyan); }
+.kev-card.low::before { background: var(--accent-success); }
+
+/* Card Header */
+.kev-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.kev-id {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--accent-cyan);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.kev-id:hover {
+  color: var(--accent-cyan-light);
+  text-decoration: underline;
+}
+
+.kev-id::before {
+  content: '🔗';
+  margin-right: 0.25rem;
+  font-size: 0.75rem;
+}
+
+/* Score Badge */
+.kev-score-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  background: var(--bg-tertiary);
+  padding: 0.35rem 0.6rem;
+  border-radius: 4px;
+  min-width: 50px;
+}
+
+.kev-score-badge.critical {
+  background: rgba(248, 81, 73, 0.15);
+  border: 1px solid rgba(248, 81, 73, 0.3);
+}
+
+.kev-score-badge.high {
+  background: rgba(210, 153, 34, 0.15);
+  border: 1px solid rgba(210, 153, 34, 0.3);
+}
+
+.kev-score-badge.medium {
+  background: rgba(88, 166, 255, 0.15);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+}
+
+.kev-score-badge.low {
+  background: rgba(63, 185, 80, 0.15);
+  border: 1px solid rgba(63, 185, 80, 0.3);
+}
+
+.kev-score-value {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.kev-score-badge.critical .kev-score-value { color: var(--accent-danger); }
+.kev-score-badge.high .kev-score-value { color: var(--accent-warning); }
+.kev-score-badge.medium .kev-score-value { color: var(--accent-cyan); }
+.kev-score-badge.low .kev-score-value { color: var(--accent-success); }
+
+.kev-score-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+/* Card Body */
+.kev-card-body {
+  margin-bottom: 0.75rem;
+}
+
+.kev-vendor-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.kev-vendor {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.kev-separator {
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+.kev-product {
+  color: var(--accent-cyan);
+  font-weight: 500;
+}
+
+.kev-description {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 2.5em;
+}
+
+/* Card Footer */
+.kev-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.kev-duedate {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.kev-duedate i {
+  color: var(--accent-warning);
+}
+
+.kev-duedate-label {
+  font-weight: 500;
+}
+
+.kev-duedate-value {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+.kev-info {
+  color: var(--text-muted);
+  cursor: help;
+  transition: color 0.2s ease;
+}
+
+.kev-info:hover {
+  color: var(--accent-cyan);
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--text-muted);
+  gap: 1rem;
+  text-align: center;
+}
+
+.empty-state i {
+  font-size: 3rem;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  max-width: 300px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .kev-year-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .kev-panel .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .kev-panel .panel-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Animations */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

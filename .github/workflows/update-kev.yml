@@ -1,0 +1,44 @@
+name: Update CISA KEV Data
+
+on:
+  schedule:
+    # Run daily at 00:00 UTC
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    # Allow manual trigger
+
+jobs:
+  update-kev:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download latest CISA KEV
+        run: |
+          curl -s https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json -o data/cisa_kev.json
+
+      - name: Verify download
+        run: |
+          python3 -c "
+          import json
+          with open('data/cisa_kev.json', 'r') as f:
+              data = json.load(f)
+          print(f'✅ Downloaded {len(data.get(\"vulnerabilities\", []))} vulnerabilities')
+          print(f'📅 Catalog version: {data.get(\"catalogVersion\", \"N/A\")}')
+          print(f'🕐 Released: {data.get(\"dateReleased\", \"N/A\")}')
+          "
+
+      - name: Commit and push if changed
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/cisa_kev.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update CISA KEV data - $(date +'%Y-%m-%d')"
+          git push

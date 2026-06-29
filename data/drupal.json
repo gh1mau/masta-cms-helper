@@ -1,0 +1,534 @@
+[
+  {
+    "id": "drupal-trusted-host",
+    "title": "Configure Trusted Host Patterns",
+    "severity": "critical",
+    "category": "application-security",
+    "description": "Restrict which hostnames can access the site to prevent HTTP Host Header attacks.",
+    "implementation": {
+      "apache": "In settings.php: $settings['trusted_host_patterns'] = ['^example\\.com$', '^.+\\.example\\.com$']",
+      "nginx": "Same settings.php configuration",
+      "linux": "grep -r 'trusted_host_patterns' /var/www/html/sites/default/settings.php"
+    },
+    "verification": "Accessing via IP or fake Host header shows trusted_hosts error",
+    "cwe": [
+      "CWE-20"
+    ],
+    "references": [
+      "https://www.drupal.org/docs/8/install/step-3-configure-trusted-host-settings"
+    ]
+  },
+  {
+    "id": "drupal-admin-path-obfuscate",
+    "title": "Change Default Admin Path",
+    "severity": "high",
+    "category": "access-control",
+    "description": "Change /admin to a custom path via configuration or contrib modules to reduce brute force exposure.",
+    "implementation": {
+      "apache": "Install Rename Admin Paths module; configure custom /manage or /control path",
+      "nginx": "Same module approach or nginx rewrite",
+      "linux": "drush en rename_admin_paths"
+    },
+    "verification": "Accessing /admin returns 404 or redirect; new path works for admin login",
+    "cwe": [
+      "CWE-307"
+    ],
+    "references": [
+      "https://www.drupal.org/project/rename_admin_paths"
+    ]
+  },
+  {
+    "id": "drupal-settings-protect",
+    "title": "Protect settings.php File",
+    "severity": "critical",
+    "category": "application-security",
+    "description": "settings.php contains database credentials. Ensure it is not readable.",
+    "implementation": {
+      "apache": "chmod 440 sites/default/settings.php; chown www-data:www-data sites/default/settings.php",
+      "nginx": "Same file permissions and ownership",
+      "linux": "chmod 440 /var/www/html/sites/default/settings.php"
+    },
+    "verification": "Direct access to settings.php returns 403; file permissions are 440",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://www.drupal.org/docs/7/install/step-4-configure-drupal/allow-settingsphp-permissions"
+    ]
+  },
+  {
+    "id": "drupal-error-reporting",
+    "title": "Disable Error Display in Production",
+    "severity": "critical",
+    "category": "application-security",
+    "description": "Verbose errors reveal paths, queries, and server details. Log errors instead of displaying.",
+    "implementation": {
+      "apache": "settings.php: $config['system.logging']['error_level'] = 'hide'; error_reporting = 0",
+      "nginx": "Same settings.php configuration",
+      "linux": "sed -i 's/error_level.*visible/error_level: hide/' settings.php"
+    },
+    "verification": "Access nonexistent path; generic message shown, no path or query disclosure",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://www.drupal.org/docs/administering-a-drupal-site/status-report"
+    ]
+  },
+  {
+    "id": "drupal-file-permissions",
+    "title": "Set Secure File Permissions",
+    "severity": "high",
+    "category": "os-security",
+    "description": "Files 644, directories 755. settings.php and services.yml should be 440. web root 555 if possible.",
+    "implementation": {
+      "apache": "chmod -R 644 /var/www/html/*; chmod -R 755 /var/www/html/*; chmod 440 sites/default/settings.php",
+      "nginx": "chmod -R 644 /var/www/html/*; chmod -R 755 /var/www/html/*",
+      "linux": "chown www-data:www-data /var/www/html -R; chmod 440 /var/www/html/sites/default/settings.php"
+    },
+    "verification": "ls -la shows 644 files, 755 dirs, 440 settings.php",
+    "cwe": [
+      "CWE-732"
+    ],
+    "references": [
+      "https://www.drupal.org/docs/7/install/step-4-configure-drupal/file-permissions-and-ownership"
+    ]
+  },
+  {
+    "id": "drupal-twig-autoescape",
+    "title": "Enable Twig Autoescape",
+    "severity": "high",
+    "category": "application-security",
+    "description": "Ensure Twig autoescape is enabled to prevent XSS from unfiltered user input in templates.",
+    "implementation": {
+      "apache": "In services.yml: twig.config: autoescape: true",
+      "nginx": "Same services.yml configuration",
+      "linux": "grep -r 'autoescape' /var/www/html/sites/default/services.yml"
+    },
+    "verification": "Custom template with {{ var }} auto-escapes HTML tags",
+    "cwe": [
+      "CWE-79"
+    ],
+    "references": [
+      "https://www.drupal.org/docs/theming/twig/twig-security"
+    ]
+  },
+  {
+    "id": "drupal-db-prefix",
+    "title": "Use Custom Database Table Prefix",
+    "severity": "medium",
+    "category": "database-security",
+    "description": "Set custom prefix in settings.php to prevent SQLi enumeration via default table names.",
+    "implementation": {
+      "apache": "settings.php: 'prefix' => 'dp_xyz_',",
+      "nginx": "Same settings.php configuration",
+      "linux": "mysql -e 'SHOW TABLES' | grep -c '^dp_xyz_'"
+    },
+    "verification": "SHOW TABLES shows custom prefix, not default Drupal table names",
+    "cwe": [
+      "CWE-656"
+    ],
+    "references": [
+      "https://www.drupal.org/docs/8/install/step-3-configure-database-prefix"
+    ]
+  },
+  {
+    "id": "drupal-admin-2fa",
+    "title": "Enable Two-Factor Authentication",
+    "severity": "high",
+    "category": "authentication",
+    "description": "Require 2FA for admin accounts using TFA or WebAuthn modules.",
+    "implementation": {
+      "apache": "Install TFA module; configure TOTP for admin and editor roles",
+      "nginx": "Same module setup via Drupal backend",
+      "linux": "drush en tfa"
+    },
+    "verification": "Admin login requires TOTP code after password entry",
+    "cwe": [
+      "CWE-308"
+    ],
+    "references": [
+      "https://www.drupal.org/project/tfa"
+    ]
+  },
+  {
+    "id": "drupal-ssl-force",
+    "title": "Force HTTPS and HSTS",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Redirect HTTP to HTTPS at server level; enable HSTS; set $base_url to https in settings.php.",
+    "implementation": {
+      "apache": "RewriteCond HTTPS off -> RewriteRule ^ https://...; settings.php: $base_url = 'https://example.com'",
+      "nginx": "return 301 https://host$request_uri; add_header Strict-Transport-Security",
+      "linux": "certbot --apache -d example.com"
+    },
+    "verification": "http:// redirects to https://; HSTS header present",
+    "cwe": [
+      "CWE-319"
+    ],
+    "references": [
+      "https://www.drupal.org/node/2905076"
+    ]
+  },
+  {
+    "id": "drupal-security-headers",
+    "title": "Configure HTTP Security Headers",
+    "severity": "high",
+    "category": "network-security",
+    "description": "Add X-Frame-Options, X-XSS-Protection, X-Content-Type-Options, Referrer-Policy, CSP.",
+    "implementation": {
+      "apache": "Header set X-Frame-Options SAMEORIGIN; Header set X-Content-Type-Options nosniff",
+      "nginx": "add_header X-Frame-Options SAMEORIGIN; add_header X-Content-Type-Options nosniff",
+      "linux": "curl -I https://example.com | grep -i x-frame"
+    },
+    "verification": "curl -I shows all security headers present",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://www.drupal.org/project/seckit"
+    ]
+  },
+  {
+    "id": "drupal-module-audit",
+    "title": "Audit and Remove Unused Modules",
+    "severity": "high",
+    "category": "application-security",
+    "description": "Uninstall unused contrib and custom modules. Keep core and contrib updated. Check for known CVEs.",
+    "implementation": {
+      "apache": "Extend > Uninstall unused modules; Extend > Available Updates for remaining",
+      "nginx": "Same via Drupal admin dashboard",
+      "linux": "drush pm:list --status=enabled | wc -l"
+    },
+    "verification": "Only required modules enabled; all at latest stable version",
+    "cwe": [
+      "CWE-1104"
+    ],
+    "references": [
+      "https://www.drupal.org/security"
+    ]
+  },
+  {
+    "id": "drupal-cron-security",
+    "title": "Secure Cron Configuration",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Use server cron instead of web-based cron; protect cron key; restrict cron URL access.",
+    "implementation": {
+      "apache": "settings.php: $settings['cron_key'] = 'randomstring'; server cron: curl -s https://example.com/cron/randomstring",
+      "nginx": "Same settings.php; add nginx location deny for /cron without key",
+      "linux": "crontab -e: */15 * * * * curl -s https://example.com/cron/KEY > /dev/null"
+    },
+    "verification": "Cron runs only via server cron with correct key; direct /cron without key blocked",
+    "cwe": [
+      "CWE-284"
+    ],
+    "references": [
+      "https://www.drupal.org/docs/administering-a-drupal-site/cron-automated-tasks"
+    ]
+  },
+  {
+    "id": "drupal-password-policy",
+    "title": "Enforce Strong Password Policy",
+    "severity": "medium",
+    "category": "authentication",
+    "description": "Install Password Policy module to enforce minimum length, complexity, and expiration rules.",
+    "implementation": {
+      "apache": "Install Password Policy module; configure policy for admin roles: min 12 chars, complexity required",
+      "nginx": "Same module setup via Drupal admin",
+      "linux": "drush en password_policy"
+    },
+    "verification": "Create test user with weak password; system rejects it with policy message",
+    "cwe": [
+      "CWE-521"
+    ],
+    "references": [
+      "https://www.drupal.org/project/password_policy"
+    ]
+  },
+  {
+    "id": "drupal-upload-config",
+    "title": "Restrict Upload Types and Execution",
+    "severity": "high",
+    "category": "application-security",
+    "description": "Whitelist allowed extensions; scan uploads; prevent PHP execution in public file directories.",
+    "implementation": {
+      "apache": "Add .htaccess in sites/default/files: SetHandler Drupal_Security_Do_Not_Remove_See_SA_2006_006",
+      "nginx": "location /sites/default/files/ { location ~ \\.php$ { deny all; } }",
+      "linux": "chmod 644 /var/www/html/sites/default/files -R"
+    },
+    "verification": "Upload PHP to files directory; access returns 403 Forbidden",
+    "cwe": [
+      "CWE-434"
+    ],
+    "references": [
+      "https://www.drupal.org/node/51561"
+    ]
+  },
+  {
+    "id": "drupal-database-ssl",
+    "title": "Enable Database SSL Encryption",
+    "severity": "medium",
+    "category": "database-security",
+    "description": "Configure encrypted database connections in settings.php to prevent data interception.",
+    "implementation": {
+      "apache": "settings.php: 'pdo' => [ PDO::MYSQL_ATTR_SSL_CA => '/path/to/ca.pem', PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => true ]",
+      "nginx": "Same settings.php PDO SSL configuration",
+      "linux": "MySQL: SHOW STATUS LIKE 'Ssl_cipher'"
+    },
+    "verification": "MySQL SHOW STATUS shows active SSL cipher for database connection",
+    "cwe": [
+      "CWE-319"
+    ],
+    "references": [
+      "https://www.drupal.org/node/2844829"
+    ]
+  },
+  {
+    "id": "drupal-login-security",
+    "title": "Configure Login Security and Brute Force Protection",
+    "severity": "high",
+    "category": "authentication",
+    "description": "Install Login Security module or configure flood control to block brute force attacks.",
+    "implementation": {
+      "apache": "Install Login Security module; set 5 failed attempts = 15 minute lockout; notify admin",
+      "nginx": "Same module approach",
+      "linux": "drush en login_security"
+    },
+    "verification": "5 failed logins trigger lockout; notification sent to admin email",
+    "cwe": [
+      "CWE-307"
+    ],
+    "references": [
+      "https://www.drupal.org/project/login_security"
+    ]
+  },
+  {
+    "id": "drupal-csp-policy",
+    "title": "Implement Content Security Policy",
+    "severity": "high",
+    "category": "application-security",
+    "description": "Use SecKit module or server config to enforce CSP and reduce XSS impact.",
+    "implementation": {
+      "apache": "Install SecKit; configure default-src self; script-src self trusted-cdn.com",
+      "nginx": "add_header Content-Security-Policy default-src self;",
+      "linux": "drush en seckit"
+    },
+    "verification": "Browser dev tools show CSP header; no console violations",
+    "cwe": [
+      "CWE-79"
+    ],
+    "references": [
+      "https://www.drupal.org/project/seckit"
+    ]
+  },
+  {
+    "id": "drupal-cache-control",
+    "title": "Configure Cache and Page Headers",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Ensure sensitive pages are not cached by proxies/CDNs; set proper Cache-Control headers.",
+    "implementation": {
+      "apache": "settings.php: $config['system.performance']['cache']['page']['max_age'] = 0 for admin pages",
+      "nginx": "Same settings.php configuration; add no-cache headers in admin location",
+      "linux": "curl -I https://example.com/admin | grep -i cache-control"
+    },
+    "verification": "Admin pages show Cache-Control: no-store, no-cache, must-revalidate",
+    "cwe": [
+      "CWE-525"
+    ],
+    "references": [
+      "https://www.drupal.org/docs/8/core/modules/system/cache-pages"
+    ]
+  },
+  {
+    "id": "drupal-session-lifetime",
+    "title": "Set Session Lifetime and Regeneration",
+    "severity": "medium",
+    "category": "data-protection",
+    "description": "Limit session cookie lifetime; regenerate session ID on privilege changes; use database sessions.",
+    "implementation": {
+      "apache": "settings.php: ini_set('session.cookie_lifetime', 0); ini_set('session.gc_maxlifetime', 3600);",
+      "nginx": "Same settings.php session configuration",
+      "linux": "grep session.cookie_lifetime /var/www/html/sites/default/settings.php"
+    },
+    "verification": "Session expires after browser close or 1 hour inactivity",
+    "cwe": [
+      "CWE-384"
+    ],
+    "references": [
+      "https://www.drupal.org/docs/8/modules/drupal-core-session"
+    ]
+  },
+  {
+    "id": "drupal-backup-restore",
+    "title": "Implement Backup and Recovery Procedures",
+    "severity": "medium",
+    "category": "data-protection",
+    "description": "Automate daily database and file backups using Backup and Migrate module or server scripts.",
+    "implementation": {
+      "apache": "Install Backup and Migrate; schedule daily backups to S3 or offsite",
+      "nginx": "Same module setup via Drupal admin",
+      "linux": "0 2 * * * drush sql-dump --result-file=/backup/drupal_DATE.sql"
+    },
+    "verification": "Backup files exist with recent timestamps in storage location",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://www.drupal.org/project/backup_migrate"
+    ]
+  },
+  {
+    "id": "drupal-update-notifications",
+    "title": "Enable Update Notifications",
+    "severity": "low",
+    "category": "application-security",
+    "description": "Configure email notifications for core, module, and theme updates via Update Manager.",
+    "implementation": {
+      "apache": "Reports > Available Updates > Settings; configure notification email frequency",
+      "nginx": "Same via Reports > Available Updates",
+      "linux": "drush ups"
+    },
+    "verification": "Test notification email received when update is available",
+    "cwe": [
+      "CWE-937"
+    ],
+    "references": [
+      "https://www.drupal.org/docs/administering-a-drupal-site/status-report"
+    ]
+  },
+  {
+    "id": "drupal-cors-restrict",
+    "title": "Restrict CORS for JSON:API and AJAX",
+    "severity": "medium",
+    "category": "network-security",
+    "description": "Configure allowed origins for JSON:API endpoints and AJAX requests in CORS configuration.",
+    "implementation": {
+      "apache": "services.yml: cors.config: enabled: true; allowedOrigins: ['https://example.com']",
+      "nginx": "Same services.yml CORS configuration",
+      "linux": "curl -H 'Origin: https://evil.com' -I https://example.com/jsonapi"
+    },
+    "verification": "Cross-origin request from unauthorized domain returns 403 or no access headers",
+    "cwe": [
+      "CWE-942"
+    ],
+    "references": [
+      "https://www.drupal.org/docs/8/modules/jsonapi/cors-configuration"
+    ]
+  },
+  {
+    "id": "drupal-rate-limit",
+    "title": "Rate Limit API and Login Endpoints",
+    "severity": "medium",
+    "category": "network-security",
+    "description": "Apply rate limiting to JSON:API, login forms, and contact forms to prevent abuse.",
+    "implementation": {
+      "apache": "Install Rate Limit module; configure per-user and per-IP limits for API endpoints",
+      "nginx": "nginx limit_req for /jsonapi and /user/login locations",
+      "linux": "drush en rate_limit"
+    },
+    "verification": "Requests beyond limit return 429 Too Many Requests",
+    "cwe": [
+      "CWE-770"
+    ],
+    "references": [
+      "https://www.drupal.org/project/rate_limit"
+    ]
+  },
+  {
+    "id": "drupal-disable-dblog",
+    "title": "Replace Database Logging with Syslog",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Disable dblog module to prevent database bloat and potential log injection; use syslog instead.",
+    "implementation": {
+      "apache": "Uninstall dblog; Install syslog; configure /var/log/drupal.log",
+      "nginx": "Same - replace dblog with syslog module",
+      "linux": "drush pm-uninstall dblog; drush en syslog"
+    },
+    "verification": "dblog not in enabled modules list; syslog module active; /var/log/drupal.log exists",
+    "cwe": [
+      "CWE-532"
+    ],
+    "references": [
+      "https://www.drupal.org/documentation/modules/dblog"
+    ]
+  },
+  {
+    "id": "drupal-honeypot",
+    "title": "Add Honeypot Protection to Forms",
+    "severity": "medium",
+    "category": "application-security",
+    "description": "Use Honeypot module to add hidden fields and time limits to forms to block spam bots.",
+    "implementation": {
+      "apache": "Install Honeypot module; enable on all forms with 5 second minimum time limit",
+      "nginx": "Same module setup",
+      "linux": "drush en honeypot"
+    },
+    "verification": "Bot submissions with instant form fill are rejected; legitimate users pass",
+    "cwe": [
+      "CWE-693"
+    ],
+    "references": [
+      "https://www.drupal.org/project/honeypot"
+    ]
+  },
+  {
+    "id": "drupal-services-disable",
+    "title": "Disable Unneeded REST Resources",
+    "severity": "high",
+    "category": "application-security",
+    "description": "Disable default JSON:API and REST resources that expose user or content data unnecessarily.",
+    "implementation": {
+      "apache": "Configuration > Web Services > REST; disable /user/{user} GET and non-essential endpoints",
+      "nginx": "Same via REST configuration UI",
+      "linux": "drush config:set rest.resource.entity.user permissions null"
+    },
+    "verification": "Disabled REST endpoints return 404 or 403 when accessed",
+    "cwe": [
+      "CWE-200"
+    ],
+    "references": [
+      "https://www.drupal.org/docs/8/api/restful-web-services-api/restful-web-services-api-overview"
+    ]
+  },
+  {
+    "id": "drupal-admin-toolbar-restrict",
+    "title": "Restrict Admin Toolbar Access",
+    "severity": "low",
+    "category": "access-control",
+    "description": "Ensure Admin Toolbar is only accessible to users with access toolbar permission; disable caching.",
+    "implementation": {
+      "apache": "Permissions > Admin Toolbar: assign only to administrator and editor roles",
+      "nginx": "Same permission configuration",
+      "linux": "drush role:perm:add administrator 'access toolbar'"
+    },
+    "verification": "User without toolbar permission sees no admin links in frontend menu",
+    "cwe": [
+      "CWE-284"
+    ],
+    "references": [
+      "https://www.drupal.org/project/admin_toolbar"
+    ]
+  },
+  {
+    "id": "drupal-multisite-isolate",
+    "title": "Isolate Multisite Databases and Files",
+    "severity": "high",
+    "category": "application-security",
+    "description": "If running multisite, separate databases, use unique prefixes, and restrict cross-site file access.",
+    "implementation": {
+      "apache": "sites.php: configure separate database credentials per site; unique private files directory",
+      "nginx": "Same sites.php and settings configuration",
+      "linux": "ls /var/www/html/sites/ shows directory per site with separate files/ and settings.php"
+    },
+    "verification": "Site A cannot read files or database of Site B through web requests",
+    "cwe": [
+      "CWE-284"
+    ],
+    "references": [
+      "https://www.drupal.org/docs/8/multisite-drupal"
+    ]
+  }
+]
