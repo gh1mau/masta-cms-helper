@@ -207,6 +207,30 @@ Hardening items follow a standardized JSON schema:
 - 🐙 GitHub: [https://github.com/gh1mau](https://github.com/gh1mau)
 - 🎬 YouTube: [https://www.youtube.com/@mastaghimau](https://www.youtube.com/@mastaghimau)
 
+## ⚠️ Disclaimer
+
+**IMPORTANT: Please Read Before Using This Tool**
+
+### Usage Responsibility
+
+- 🔍 **Verify from Official Documentation**: All hardening steps provided in this tool should be verified against the official documentation of the respective CMS, web server, or operating system.
+
+- 🧪 **Test in Staging First**: ALWAYS test all security configurations and hardening steps in a **staging or development environment** before applying to production servers.
+
+- ⚡ **Backup Required**: Create full backups of your system, database, and configuration files before implementing any hardening measures.
+
+### Liability
+
+THE AUTHOR ASSUMES **NO RESPONSIBILITY OR LIABILITY** for any damages, data loss, system failures, security breaches, or business interruptions that may occur from using the information and configurations provided in this tool.
+
+- Use this tool at **your own risk**
+- The author is **not liable** for any direct, indirect, incidental, or consequential damages
+- **No warranty** is provided, express or implied
+
+### Professional Advice
+
+This tool is for **educational and reference purposes only**. For production environments, consult with qualified security professionals and follow your organization's security policies and procedures.
+
 ## 📝 Contributing
 
 This project is maintained for personal and educational use. Feel free to fork and customize for your needs.
