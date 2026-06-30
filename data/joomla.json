@@ -8,29 +8,29 @@
       "severity": "critical",
       "category": "server-config",
       "description": "Prevent direct access to sensitive files containing configuration data such as database credentials.",
-      "threat": "Information Disclosure - Attackers can read configuration files to obtain database credentials and other sensitive data.",
+      "threat": "Information Disclosure - Attackers can read configuration files to obtain database credentials.",
       "impact": "Complete site compromise, database breach, data theft.",
-      "verification": "Access to /.htaccess, /configuration.php, or /administrator/components/com_config/ returns 403 Forbidden",
+      "verification": "Access to /.htaccess, /configuration.php returns 403 Forbidden",
       "implementation": {
         "apache": "<FilesMatch \"^\\.(ht|ini|phps|fla|psd|log|sh)\">\n  Require all denied\n</FilesMatch>\n\n<Files \"configuration.php\">\n  Require all denied\n</Files>",
-        "nginx": "location ~* /\\.(ht|ini|phps|fla|psd|log|sh)$ { deny all; return 403; }\n\nlocation ~ configuration.php { deny all; return 403; }"
+        "nginx": "location ~* /\\.(ht|ini|phps|fla|psd|log|sh)$ { deny all; return 403; }\n\nlocation ~ configuration.php { deny all; return 403; }",
+        "litespeed": "<FilesMatch \"^\\.(ht|ini|phps|fla|psd|log|sh)\">\n  Require all denied\n</FilesMatch>\n\n<Files \"configuration.php\">\n  Require all denied\n</Files>"
       },
       "mitigationSteps": [
-        "1. Create/rename .htaccess file in root directory",
+        "1. Create/Edit .htaccess file in root directory",
         "2. Add FilesMatch directive to block sensitive extensions",
         "3. Add specific block for configuration.php",
         "4. Test by attempting to access configuration.php directly",
-        "5. Monitor Apache/Nginx error logs for blocked attempts"
+        "5. Monitor server error logs for blocked attempts"
       ],
       "testing": [
         "curl -I https://yoursite.com/configuration.php should return 403",
-        "curl -I https://yoursite.com/.htaccess should return 403",
-        "Check server logs: grep \"configuration.php\" /var/log/apache2/error.log"
+        "curl -I https://yoursite.com/.htaccess should return 403"
       ],
-      "rollback": "Remove or comment out the FilesMatch and Files blocks in .htaccess or nginx config, then reload web server.",
-      "tools": ["cURL", "Browser DevTools", "Web Server Logs"],
+      "rollback": "Remove the FilesMatch and Files blocks in .htaccess or nginx config.",
+      "tools": ["cURL", "Browser DevTools"],
       "cwe": ["CWE-200", "CWE-548"],
-      "references": ["https://docs.joomla.org/Security_Checklist", "https://owasp.org/www-project-top-ten/"]
+      "references": ["https://docs.joomla.org/Security_Checklist"]
     },
     {
       "id": "j2",
@@ -40,79 +40,80 @@
       "description": "Never use 'admin' as super user. Create new super user with unique name and delete the default.",
       "threat": "Brute Force Attacks - Default usernames are the first target for automated login attacks.",
       "impact": "Unauthorized admin access, site defacement, malware injection.",
-      "verification": "Super user has unique username (not 'admin', 'administrator', 'root', 'webmaster')",
+      "verification": "Super user has unique username (not 'admin', 'administrator', 'root')",
       "implementation": {
-        "apache": "# Step 1: Users > Manage > Add New User\n# Step 2: Set Super Users group\n# Step 3: Logout and login with new account\n# Step 4: Delete old 'admin' user\n# Step 5: Reassign content if prompted",
-        "nginx": "# Same process - CMS-level configuration"
+        "apache": "# Users > Manage > Add New User\n# Set Super Users group\n# Logout and login with new account\n# Delete old 'admin' user",
+        "nginx": "# Same process - CMS-level configuration",
+        "litespeed": "# Same process - CMS-level configuration"
       },
       "mitigationSteps": [
         "1. Login to Joomla admin with existing admin account",
         "2. Navigate to Users > Manage",
         "3. Click 'New' button",
-        "4. Fill: Name, Username (unique, 12+ chars), Email, Password (strong)",
+        "4. Fill: Name, Username (unique, 12+ chars), Email, Password",
         "5. Set User Group to 'Super Users'",
         "6. Logout and login with new account",
-        "7. Users > Manage > Click 'admin' > Delete",
-        "8. Choose to reassign created items to new user"
+        "7. Delete old 'admin' user",
+        "8. Reassign content if prompted"
       ],
       "testing": [
         "Attempt login with 'admin' - should fail",
-        "Verify new super user can access all admin functions",
-        "Check Users table in database: SELECT username FROM jos_users WHERE gid=8"
+        "Verify new super user can access all admin functions"
       ],
-      "rollback": "If new user has issues, create another super user via database or use emergency password reset.",
-      "tools": ["Joomla Admin Panel", "phpMyAdmin (if needed)"],
+      "rollback": "Create another super user via database if needed.",
+      "tools": ["Joomla Admin Panel", "phpMyAdmin"],
       "cwe": ["CWE-798", "CWE-307"],
-      "references": ["https://docs.joomla.org/Security", "https://docs.joomla.org/How_do_you_recover_or_reset_your_admin_password%3F"]
+      "references": ["https://docs.joomla.org/Security"]
     },
     {
       "id": "j3",
-      "title": "Enable two-factor authentication",
+      "title": "Enable Multi-Factor Authentication (MFA)",
       "severity": "critical",
       "category": "authentication",
-      "description": "Require TOTP for all administrator accounts.",
+      "description": "Require MFA/TOTP for all administrator accounts using built-in Joomla MFA.",
       "threat": "Credential Theft - Stolen passwords can be used if no second factor required.",
       "impact": "Full admin compromise even with strong password.",
-      "verification": "Login prompts for TOTP code after password",
+      "verification": "Login prompts for MFA code after password",
       "implementation": {
-        "apache": "# System > Global Configuration > Users > Two Factor Authentication\n# Enable for backend users",
-        "nginx": "# Same configuration"
+        "apache": "# System > Manage > Users > Multi-factor Authentication\n# Enable for backend users",
+        "nginx": "# Same configuration",
+        "litespeed": "# Same configuration"
       },
       "mitigationSteps": [
         "1. Login as super user",
-        "2. System > Global Configuration > Users",
-        "3. Enable Two Factor Authentication",
-        "4. Select 'Google Authenticator' as method",
+        "2. System > Manage > Users > Multi-factor Authentication",
+        "3. Enable for Administrator/Super Users",
+        "4. Each user sets up MFA in their profile",
         "5. Scan QR code with authenticator app",
-        "6. Save backup codes securely",
-        "7. Logout and test 2FA login"
+        "6. Save backup codes securely"
       ],
       "testing": [
-        "Login with password - should request TOTP",
-        "Try wrong TOTP code - should fail",
+        "Login with password - should request MFA",
+        "Try wrong MFA code - should fail",
         "Use backup code - should work"
       ],
-      "rollback": "Disable 2FA from user profile or use backup codes.",
-      "tools": ["Google Authenticator App", "KeePassXC (backup codes)"],
+      "rollback": "Disable MFA from user profile or use backup codes.",
+      "tools": ["Google Authenticator App", "KeePassXC"],
       "cwe": ["CWE-308"],
-      "references": ["https://docs.joomla.org/J3.x:Two_Factor_Authentication"]
+      "references": ["https://docs.joomla.org/J4.x:Multi-factor_Authentication"]
     },
     {
       "id": "j4",
-      "title": "Update to latest stable version",
+      "title": "Keep Joomla Core updated",
       "severity": "critical",
       "category": "application-security",
-      "description": "Keep Joomla core, extensions, and templates updated to patch security vulnerabilities.",
+      "description": "Keep Joomla core updated to patch security vulnerabilities using Stable Update Channel.",
       "threat": "Exploit of Known Vulnerabilities - Old versions have public exploits.",
       "impact": "Remote code execution, data breach, complete site compromise.",
-      "verification": "No available updates in Components > Joomla! Update",
+      "verification": "No available updates in System > Update > Joomla",
       "implementation": {
-        "apache": "# Backup first!\n# Components > Joomla! Update > Check for Updates\n# Install latest stable version",
-        "nginx": "# Same process"
+        "apache": "# System > Update > Joomla\n# Check for Updates\n# Install latest stable version",
+        "nginx": "# Same process",
+        "litespeed": "# Same process"
       },
       "mitigationSteps": [
         "1. Create full backup (files + database)",
-        "2. Check Components > Joomla! Update",
+        "2. Check System > Update > Joomla",
         "3. Read release notes for breaking changes",
         "4. Test update on staging environment",
         "5. Apply update to production",
@@ -134,31 +135,30 @@
       "title": "Use strong database credentials",
       "severity": "critical",
       "category": "database-security",
-      "description": "Database user should have complex password and minimal privileges.",
+      "description": "Database user should have complex password (20+ chars) with minimal privileges.",
       "threat": "Database Compromise - Weak passwords can be brute forced.",
       "impact": "Data theft, data corruption, site compromise.",
       "verification": "Password length >20 chars with random characters",
       "implementation": {
-        "apache": "# Generate: openssl rand -base64 24\n# Update in configuration.php\n# Grant only required permissions",
-        "nginx": "# Same process"
+        "apache": "# Generate: openssl rand -base64 24\n# Update in configuration.php",
+        "nginx": "# Same process",
+        "litespeed": "# Same process"
       },
       "mitigationSteps": [
         "1. Generate strong password: openssl rand -base64 24",
         "2. Update database user password",
         "3. Update configuration.php with new credentials",
         "4. Revoke unnecessary database privileges",
-        "5. Test site functionality",
-        "6. Store password in password manager"
+        "5. Test site functionality"
       ],
       "testing": [
-        "Can connect to database",
         "Site loads without errors",
         "Cannot connect with old password"
       ],
-      "rollback": "Restore configuration.php from backup and revert database password.",
-      "tools": ["OpenSSL", "phpMyAdmin", "MySQL CLI"],
+      "rollback": "Restore configuration.php from backup.",
+      "tools": ["OpenSSL", "phpMyAdmin"],
       "cwe": ["CWE-798"],
-      "references": ["https://docs.joomla.org/Security_Checklist/4-Where_can_you_learn_more_about_file_permissions"]
+      "references": ["https://docs.joomla.org/Security_Checklist"]
     },
     {
       "id": "j6",
@@ -166,32 +166,153 @@
       "severity": "high",
       "category": "network-security",
       "description": "Force SSL for all frontend and backend pages.",
-      "threat": "Man-in-the-Middle Attacks - HTTP traffic can be intercepted and modified.",
+      "threat": "Man-in-the-Middle Attacks - HTTP traffic can be intercepted.",
       "impact": "Session hijacking, credential theft, data theft.",
       "verification": "All URLs redirect to https:// and show secure padlock",
       "implementation": {
-        "apache": "# System > Global Configuration > Server > Force HTTPS: Entire Site",
-        "nginx": "return 301 https://$server_name$request_uri;"
+        "apache": "# System > Global Configuration > Server\n# Force HTTPS: Administrator & Frontend",
+        "nginx": "return 301 https://$server_name$request_uri;",
+        "litespeed": "# System > Global Configuration > Server\n# Force HTTPS: Administrator & Frontend"
       },
       "mitigationSteps": [
-        "1. Obtain SSL certificate (Let's Encrypt recommended)",
+        "1. Obtain SSL certificate (Let's Encrypt)",
         "2. Configure web server for HTTPS",
         "3. Joomla: System > Global Configuration > Server",
-        "4. Set Force HTTPS to 'Entire Site'",
+        "4. Set Force HTTPS appropriately",
         "5. Test HTTP redirects to HTTPS",
-        "6. Update all internal links to https://",
-        "7. Test SSL rating at ssllabs.com"
+        "6. Update all internal links to https://"
       ],
       "testing": [
         "HTTP requests redirect to HTTPS",
         "SSL Labs rating A+ or A",
-        "No mixed content warnings in browser",
-        "CMS login shows secure connection"
+        "No mixed content warnings"
       ],
-      "rollback": "Remove SSL configuration from web server and disable Force HTTPS in Joomla.",
+      "rollback": "Remove SSL configuration and disable Force HTTPS.",
       "tools": ["SSL Labs Test", "Browser DevTools"],
       "cwe": ["CWE-319"],
       "references": ["https://docs.joomla.org/Enabling_HTTPS"]
+    },
+    {
+      "id": "j7",
+      "title": "Remove /installation directory",
+      "severity": "critical",
+      "category": "installation",
+      "description": "Delete the /installation directory immediately after Joomla installation is complete.",
+      "threat": "Re-installation Attack - Attackers can re-run installer and compromise site.",
+      "impact": "Complete site compromise, database overwrite, unauthorized access.",
+      "verification": "Directory does not exist and returns 404",
+      "implementation": {
+        "apache": "rm -rf /var/www/html/installation",
+        "nginx": "rm -rf /var/www/html/installation",
+        "litespeed": "rm -rf /var/www/html/installation"
+      },
+      "mitigationSteps": [
+        "1. SSH to server",
+        "2. Navigate to Joomla root directory",
+        "3. Run: rm -rf installation/",
+        "4. Verify directory is deleted",
+        "5. Test access to /installation returns 404"
+      ],
+      "testing": [
+        "ls -la installation/ should return 'No such file'",
+        "curl -I /installation returns 404"
+      ],
+      "rollback": "Cannot restore - reinstall Joomla if needed.",
+      "tools": ["SSH", "File Manager"],
+      "cwe": ["CWE-459"],
+      "references": ["https://docs.joomla.org/J4.x:Installing_Joomla"]
+    },
+    {
+      "id": "j8",
+      "title": "Disable Debug Mode and Error Reporting",
+      "severity": "high",
+      "category": "application-security",
+      "description": "Disable Debug Mode, Debug Language, and set Error Reporting to 'None' in production.",
+      "threat": "Information Disclosure - Debug messages reveal sensitive paths and data.",
+      "impact": "Attackers gain knowledge of system internals, file paths, database queries.",
+      "verification": "No debug messages or errors displayed on frontend",
+      "implementation": {
+        "apache": "# System > Global Configuration > System\n# Debug Settings: No\n# Error Reporting: None",
+        "nginx": "# Same configuration",
+        "litespeed": "# Same configuration"
+      },
+      "mitigationSteps": [
+        "1. Login to Joomla admin",
+        "2. System > Global Configuration > System",
+        "3. Set Debug System to 'No'",
+        "4. Set Debug Language to 'No'",
+        "5. Set Error Reporting to 'None'",
+        "6. Save & Close"
+      ],
+      "testing": [
+        "Visit frontend with invalid URL - no stack traces shown",
+        "No PHP notices/warnings displayed"
+      ],
+      "rollback": "Re-enable debug mode in Global Configuration.",
+      "tools": ["Joomla Admin Panel"],
+      "cwe": ["CWE-209", "CWE-489"],
+      "references": ["https://docs.joomla.org/Global_configuration"]
+    },
+    {
+      "id": "j9",
+      "title": "Remove unused extensions",
+      "severity": "critical",
+      "category": "application-security",
+      "description": "Uninstall extensions (components, modules, plugins) that are not in use.",
+      "threat": "Vulnerable Extensions - Unused extensions may have unpatched vulnerabilities.",
+      "impact": "Remote code execution, site compromise through extension vulnerabilities.",
+      "verification": "Only required extensions are installed",
+      "implementation": {
+        "apache": "# System > Manage > Extensions\n# Filter by type and uninstall",
+        "nginx": "# Same process",
+        "litespeed": "# Same process"
+      },
+      "mitigationSteps": [
+        "1. System > Manage > Extensions",
+        "2. Filter by Components, Modules, Plugins, Libraries",
+        "3. Identify unused items",
+        "4. Check for dependencies",
+        "5. Uninstall each unused extension",
+        "6. Clear cache after removal"
+      ],
+      "testing": [
+        "Extensions list shows only needed items",
+        "Site functions normally after removal"
+      ],
+      "rollback": "Reinstall extension from backup or Joomla Extensions.",
+      "tools": ["Joomla Admin Panel"],
+      "cwe": ["CWE-1104"],
+      "references": ["https://extensions.joomla.org/vulnerable-extensions/"]
+    },
+    {
+      "id": "j10",
+      "title": "Secure configuration.php Permissions",
+      "severity": "critical",
+      "category": "server-config",
+      "description": "Set ownership and permissions for configuration.php to prevent unauthorized access.",
+      "threat": "Unauthorized Configuration Access - Wrong permissions allow reading configuration.",
+      "impact": "Database credentials exposed, site compromise.",
+      "verification": "File permissions are 644 or 640 and owned by web server user",
+      "implementation": {
+        "apache": "chown www-data:www-data configuration.php\nchmod 640 configuration.php",
+        "nginx": "chown www-data:www-data configuration.php\nchmod 640 configuration.php",
+        "litespeed": "chown lsadm:lsadm configuration.php\nchmod 640 configuration.php"
+      },
+      "mitigationSteps": [
+        "1. SSH to server",
+        "2. Navigate to Joomla root directory",
+        "3. Run: chown [webuser]:[webgroup] configuration.php",
+        "4. Run: chmod 640 configuration.php",
+        "5. Verify: ls -la configuration.php"
+      ],
+      "testing": [
+        "ls -la shows -rw-r----- (640) or -rw-r--r-- (644)",
+        "Other users cannot read file"
+      ],
+      "rollback": "Change permissions back: chmod 644 configuration.php",
+      "tools": ["SSH", "chmod", "chown"],
+      "cwe": ["CWE-732"],
+      "references": ["https://docs.joomla.org/Security_Checklist"]
     }
   ]
 }
