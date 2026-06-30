@@ -297,11 +297,15 @@
   font-weight: 500;
 }
 
-/* Description Column */
+/* Description Column - Updated for text wrapping */
 .kev-col-description {
   font-size: 0.85rem;
   color: var(--text-primary);
-  line-height: 1.4;
+  line-height: 1.5;
+  white-space: normal;
+  overflow: visible;
+  word-wrap: break-word;
+  hyphens: auto;
 }
 
 /* Due Date Column */
@@ -363,7 +367,7 @@
   }
   
   .kev-table-header {
-    display: none; /* Hide header on mobile, show as cards */
+    display: none;
   }
   
   .kev-table-row {
