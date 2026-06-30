@@ -884,7 +884,7 @@ class App {
     });
     
     // Reset Progress - Clear everything including cache, cookies, localStorage
-    document.getElementById('reset-progress')?.addEventListener('click', () => {
+    document.getElementById('btn-reset-progress')?.addEventListener('click', () => {
       if (confirm('Reset ALL data including progress, configuration, cache and cookies? This cannot be undone.')) {
         // Clear localStorage
         localStorage.clear();
