@@ -199,6 +199,14 @@ Hardening items follow a standardized JSON schema:
 - ✅ System auditing (auditd)
 - ✅ MAC (AppArmor/SELinux)
 
+## 👤 Author
+
+**Hussein Mohamed Masta Ghimau**
+
+- 📧 Email: [gh1mau.rulez@gmail.com](mailto:gh1mau.rulez@gmail.com)
+- 🐙 GitHub: [https://github.com/gh1mau](https://github.com/gh1mau)
+- 🎬 YouTube: [https://www.youtube.com/@mastaghimau](https://www.youtube.com/@mastaghimau)
+
 ## 📝 Contributing
 
 This project is maintained for personal and educational use. Feel free to fork and customize for your needs.
