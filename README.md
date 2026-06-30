@@ -9,6 +9,8 @@ A comprehensive security hardening web application and reference guide for Conte
 
 **Access the tool here:** [https://gh1mau.github.io/masta-cms-helper/](https://gh1mau.github.io/masta-cms-helper/)
 
+> 💡 **Note:** For the best experience, use a **desktop browser**. The mobile version is simplified for easier viewing on small screens.
+
 ## 📋 What is CMS Hardening Helper?
 
 CMS Hardening Helper is an interactive security hardening checklist and configuration generator designed to help system administrators and developers secure their web infrastructure. The tool provides:
