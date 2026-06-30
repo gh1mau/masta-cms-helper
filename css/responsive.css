@@ -36,24 +36,25 @@
     display: none;
   }
   
-  /* Left sidebar becomes fixed overlay */
+  /* Left sidebar becomes fixed overlay - MUST BE ABOVE OVERLAY */
   .sidebar-left {
     position: fixed;
     top: 0;
     left: -280px;
-    width: 260px;
+    width: 280px;
     height: 100vh;
     background: var(--bg-secondary);
     border-right: 1px solid var(--border-color);
-    z-index: 1000;
+    z-index: 2000 !important; /* Above everything including overlay */
     transition: left 0.3s ease;
     overflow-y: auto;
     padding-top: 60px;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
   }
   
   /* When sidebar is open */
   .sidebar-left.open {
-    left: 0;
+    left: 0 !important;
   }
   
   /* Main content adjustments */
@@ -69,7 +70,7 @@
     top: 0;
     left: 0;
     right: 0;
-    z-index: 500;
+    z-index: 100;
     height: 56px;
   }
   
@@ -83,6 +84,7 @@
     padding: 0.5rem;
     cursor: pointer;
     margin-right: 0.5rem;
+    z-index: 101;
   }
   
   /* Hide tagline on mobile */
@@ -91,7 +93,7 @@
     display: none;
   }
   
-  /* Overlay when sidebar open */
+  /* Overlay when sidebar open - BELOW SIDEBAR */
   .sidebar-overlay {
     display: none;
     position: fixed;
@@ -99,8 +101,8 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    z-index: 999;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1500; /* Below sidebar (2000) but above everything else */
   }
   
   .sidebar-overlay.visible {
