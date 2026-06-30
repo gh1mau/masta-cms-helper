@@ -36,25 +36,63 @@
     display: none;
   }
   
-  /* Left sidebar becomes fixed overlay - MUST BE ABOVE OVERLAY */
+  /* Left sidebar becomes INLINE (visible terus) on mobile */
   .sidebar-left {
-    position: fixed;
-    top: 0;
-    left: -280px;
-    width: 280px;
-    height: 100vh;
+    position: relative; /* Not fixed anymore */
+    top: auto;
+    left: auto;
+    width: 100%;
+    height: auto;
     background: var(--bg-secondary);
-    border-right: 1px solid var(--border-color);
-    z-index: 2000 !important; /* Above everything including overlay */
-    transition: left 0.3s ease;
-    overflow-y: auto;
-    padding-top: 60px;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    z-index: auto;
+    transition: none;
+    overflow-y: visible;
+    padding-top: 0;
+    box-shadow: none;
+    order: 1; /* Place after header */
   }
   
-  /* When sidebar is open */
-  .sidebar-left.open {
-    left: 0 !important;
+  /* Sidebar sections - horizontal layout */
+  .sidebar-section {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .sidebar-title {
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Config groups in horizontal scroll */
+  .config-group {
+    display: inline-block;
+    margin-right: 1rem;
+    vertical-align: top;
+  }
+  
+  .config-label {
+    font-size: 0.75rem;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+  
+  .config-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+  
+  .config-btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.75rem;
+  }
+  
+  /* Hide export section on mobile */
+  .sidebar-section:nth-child(2),
+  .sidebar-footer {
+    display: none;
   }
   
   /* Main content adjustments */
@@ -62,6 +100,7 @@
     margin-top: 56px;
     padding: 0.75rem;
     max-width: 100%;
+    order: 2;
   }
   
   /* Top nav always visible */
@@ -74,17 +113,9 @@
     height: 56px;
   }
   
-  /* Mobile menu button */
+  /* Menu toggle not needed since sidebar is inline */
   .mobile-menu-toggle {
-    display: flex !important;
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    font-size: 1.25rem;
-    padding: 0.5rem;
-    cursor: pointer;
-    margin-right: 0.5rem;
-    z-index: 101;
+    display: none !important;
   }
   
   /* Hide tagline on mobile */

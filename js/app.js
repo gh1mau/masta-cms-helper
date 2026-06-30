@@ -883,13 +883,30 @@ class App {
       reader.readAsText(file);
     });
     
-    // Reset Progress
+    // Reset Progress - Clear everything including cache, cookies, localStorage
     document.getElementById('reset-progress')?.addEventListener('click', () => {
-      if (confirm('Reset ALL checklist progress? This cannot be undone.')) {
+      if (confirm('Reset ALL data including progress, configuration, cache and cookies? This cannot be undone.')) {
+        // Clear localStorage
+        localStorage.clear();
+        
+        // Clear sessionStorage
+        sessionStorage.clear();
+        
+        // Clear all cookies
+        document.cookie.split(";").forEach(function(c) {
+          document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date(0).toUTCString() + ";path=/");
+        });
+        
+        // Clear application state
         this.state.progress = {};
-        this.state.saveProgress();
-        this.refreshAll();
-        this.showToast('All progress reset', 'success');
+        this.state.config = { cms: 'all', server: 'apache', os: 'linux' };
+        
+        this.showToast('All data cleared. Reloading...', 'success');
+        
+        // Reload page after short delay to clear any cached data
+        setTimeout(() => {
+          location.reload(true);
+        }, 1500);
       }
     });
     
