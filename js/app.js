@@ -769,6 +769,7 @@ class App {
     this.bindStackTabs();
     this.bindSeverityFilter();
     this.bindManagementActions();
+    this.bindMobileMenu();
     
     // Load hardening data from JSON files first
     await initializeHardeningData();
@@ -1198,6 +1199,45 @@ class App {
     
     html += '</div>';
     container.innerHTML = html;
+  }
+
+  bindMobileMenu() {
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebarLeft = document.getElementById('sidebar-left');
+    const sidebarRight = document.getElementById('sidebar-right');
+    const overlay = document.getElementById('sidebar-overlay');
+    
+    if (!menuToggle || !sidebarLeft) return;
+    
+    // Toggle left sidebar (menu)
+    menuToggle.addEventListener('click', () => {
+      sidebarLeft.classList.toggle('open');
+      if (sidebarRight) sidebarRight.classList.remove('open');
+      if (overlay) overlay.classList.toggle('visible', sidebarLeft.classList.contains('open'));
+    });
+    
+    // Close sidebar when overlay clicked
+    if (overlay) {
+      overlay.addEventListener('click', () => {
+        sidebarLeft.classList.remove('open');
+        if (sidebarRight) sidebarRight.classList.remove('open');
+        overlay.classList.remove('visible');
+      });
+    }
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768) {
+        const isClickInsideSidebar = sidebarLeft.contains(e.target) || (sidebarRight && sidebarRight.contains(e.target));
+        const isClickOnToggle = menuToggle.contains(e.target);
+        
+        if (!isClickInsideSidebar && !isClickOnToggle) {
+          sidebarLeft.classList.remove('open');
+          if (sidebarRight) sidebarRight.classList.remove('open');
+          if (overlay) overlay.classList.remove('visible');
+        }
+      }
+    });
   }
 
   showToast(message, type = 'info') {
