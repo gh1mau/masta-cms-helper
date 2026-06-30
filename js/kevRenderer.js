@@ -1,6 +1,6 @@
 /**
  * KEV Renderer Module - Professional CISA KEV Display
- * Row-based table layout with CVE.org links
+ * Card-based layout for full text display
  */
 
 class KEVRenderer {
@@ -58,51 +58,50 @@ class KEVRenderer {
           <span class="kev-year-badge">${year}</span>
           <span class="kev-year-count">${items.length} vulnerabilities</span>
         </div>
-        <div class="kev-table">
-          <div class="kev-table-header">
-            <div class="kev-col kev-col-id">CVE ID</div>
-            <div class="kev-col kev-col-severity">Severity</div>
-            <div class="kev-col kev-col-product">Vendor › Product</div>
-            <div class="kev-col kev-col-description">Vulnerability</div>
-            <div class="kev-col kev-col-duedate">Due Date</div>
-          </div>
-          <div class="kev-table-body">
-            ${items.map(item => this.renderKEVRow(item)).join('')}
-          </div>
+        <div class="kev-card-grid">
+          ${items.map(item => this.renderKEVCard(item)).join('')}
         </div>
       </div>
     `;
   }
 
-  renderKEVRow(item) {
+  renderKEVCard(item) {
     const severityClass = this.getSeverityClass(item.cvss);
     const severityLabel = this.getSeverityLabel(item.cvss);
     
     return `
-      <div class="kev-table-row ${severityClass}">
-        <div class="kev-col kev-col-id">
-          <a href="https://www.cve.org/CVERecord?id=${item.id}" 
-             target="_blank" 
-             rel="noopener"
-             class="kev-id-link" 
-             title="View on CVE.org">
-            ${item.id}
-          </a>
+      <div class="kev-card ${severityClass}">
+        <div class="kev-card-header">
+          <div class="kev-card-id">
+            <a href="https://www.cve.org/CVERecord?id=${item.id}" 
+               target="_blank" 
+               rel="noopener"
+               title="View on CVE.org">
+              ${item.id}
+            </a>
+          </div>
+          <div class="kev-card-severity">
+            <span class="kev-card-severity-badge ${severityClass}">${severityLabel}</span>
+            <span class="kev-card-score">${item.cvss.toFixed(1)}</span>
+          </div>
         </div>
-        <div class="kev-col kev-col-severity">
-          <span class="kev-severity-badge ${severityClass}">${severityLabel}</span>
-          <span class="kev-score-value">${item.cvss.toFixed(1)}</span>
+        
+        <div class="kev-card-product">
+          <span class="kev-card-vendor">${item.vendor}</span>
+          <span class="kev-card-separator">›</span>
+          <span class="kev-card-product-name">${item.product}</span>
         </div>
-        <div class="kev-col kev-col-product">
-          <span class="kev-vendor">${item.vendor}</span>
-          <span class="kev-separator">›</span>
-          <span class="kev-product">${item.product}</span>
+        
+        <div class="kev-card-description">
+          ${this.escapeHtml(item.vulnerability)}
         </div>
-        <div class="kev-col kev-col-description" title="${this.escapeHtml(item.vulnerability)}">
-          ${item.vulnerability}
-        </div>
-        <div class="kev-col kev-col-duedate">
-          <i class="fas fa-clock"></i> ${item.dueDate}
+        
+        <div class="kev-card-footer">
+          <div class="kev-card-duedate">
+            <i class="fas fa-clock"></i>
+            <span class="kev-card-duedate-label">Due:</span>
+            <span class="kev-card-duedate-value">${item.dueDate}</span>
+          </div>
         </div>
       </div>
     `;

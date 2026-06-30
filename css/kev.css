@@ -1,6 +1,6 @@
 /* ==========================================
    CISA KEV Vulnerability Display Styles
-   Row-based Professional Table Layout
+   Card-based Layout for Full Text Display
    ========================================== */
 
 /* Subtitle badge next to panel title */
@@ -123,116 +123,82 @@
 }
 
 /* ==========================================
-   ROW-BASED TABLE LAYOUT
+   CARD-BASED LAYOUT
    ========================================== */
 
-/* Table Container */
-.kev-table {
+/* Card Grid */
+.kev-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 1rem;
+}
+
+/* Individual Card */
+.kev-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
+  padding: 1rem 1.25rem;
+  transition: all 0.2s ease;
+  position: relative;
   overflow: hidden;
 }
 
-/* Table Header */
-.kev-table-header {
-  display: grid;
-  grid-template-columns: 145px 85px 160px 1fr 100px;
-  gap: 0;
-  background: var(--bg-tertiary);
-  border-bottom: 2px solid var(--border-color);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
+.kev-card:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
-.kev-table-header .kev-col {
-  padding: 0.75rem 1rem;
-  border-right: 1px solid var(--border-color);
-}
-
-.kev-table-header .kev-col:last-child {
-  border-right: none;
-}
-
-/* Table Body */
-.kev-table-body {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Table Row */
-.kev-table-row {
-  display: grid;
-  grid-template-columns: 145px 85px 160px 1fr 100px;
-  gap: 0;
-  align-items: center;
-  border-bottom: 1px solid var(--border-color);
-  transition: all 0.15s ease;
-  position: relative;
-}
-
-.kev-table-row:last-child {
-  border-bottom: none;
-}
-
-.kev-table-row:hover {
-  background: var(--bg-tertiary);
-}
-
-/* Severity indicators on left border */
-.kev-table-row::before {
+/* Severity color indicator on left side */
+.kev-card::before {
   content: '';
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
-  width: 3px;
+  width: 4px;
   background: var(--accent-muted);
 }
 
-.kev-table-row.critical::before { background: var(--accent-danger); }
-.kev-table-row.high::before { background: var(--accent-warning); }
-.kev-table-row.medium::before { background: var(--accent-cyan); }
-.kev-table-row.low::before { background: var(--accent-success); }
+.kev-card.critical::before { background: var(--accent-danger); }
+.kev-card.high::before { background: var(--accent-warning); }
+.kev-card.medium::before { background: var(--accent-cyan); }
+.kev-card.low::before { background: var(--accent-success); }
 
-/* Table Columns */
-.kev-col {
-  padding: 0.75rem 1rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* Card Header */
+.kev-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+  gap: 0.75rem;
 }
 
-/* CVE ID Column */
-.kev-col-id {
+.kev-card-id {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
-.kev-id-link {
+.kev-card-id a {
   color: var(--accent-cyan);
   text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s ease;
 }
 
-.kev-id-link:hover {
-  color: var(--accent-cyan-light);
+.kev-card-id a:hover {
   text-decoration: underline;
 }
 
-/* Severity Column */
-.kev-col-severity {
+/* Severity Badge in Card */
+.kev-card-severity {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  align-items: flex-start;
+  align-items: flex-end;
+  gap: 0.2rem;
 }
 
-.kev-severity-badge {
+.kev-card-severity-badge {
   font-size: 0.65rem;
   font-weight: 700;
   padding: 0.2rem 0.5rem;
@@ -241,76 +207,80 @@
   letter-spacing: 0.5px;
 }
 
-.kev-severity-badge.critical {
+.kev-card-severity-badge.critical {
   background: rgba(248, 81, 73, 0.2);
   color: var(--accent-danger);
   border: 1px solid rgba(248, 81, 73, 0.4);
 }
 
-.kev-severity-badge.high {
+.kev-card-severity-badge.high {
   background: rgba(210, 153, 34, 0.2);
   color: var(--accent-warning);
   border: 1px solid rgba(210, 153, 34, 0.4);
 }
 
-.kev-severity-badge.medium {
+.kev-card-severity-badge.medium {
   background: rgba(88, 166, 255, 0.2);
   color: var(--accent-cyan);
   border: 1px solid rgba(88, 166, 255, 0.4);
 }
 
-.kev-severity-badge.low {
+.kev-card-severity-badge.low {
   background: rgba(63, 185, 80, 0.2);
   color: var(--accent-success);
   border: 1px solid rgba(63, 185, 80, 0.4);
 }
 
-.kev-score-value {
+.kev-card-score {
   font-family: var(--font-mono);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-secondary);
 }
 
-/* Product Column */
-.kev-col-product {
+/* Product Info */
+.kev-card-product {
   font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  flex-wrap: nowrap;
+  gap: 0.35rem;
+  flex-wrap: wrap;
 }
 
-.kev-vendor {
-  color: var(--text-secondary);
+.kev-card-vendor {
   font-weight: 500;
 }
 
-.kev-separator {
+.kev-card-separator {
   color: var(--text-muted);
-  font-weight: 300;
-  font-size: 0.7rem;
 }
 
-.kev-product {
+.kev-card-product-name {
   color: var(--accent-cyan);
   font-weight: 500;
 }
 
-/* Description Column - Updated for text wrapping */
-.kev-col-description {
-  font-size: 0.85rem;
+/* Vulnerability Description - Full text */
+.kev-card-description {
+  font-size: 0.9rem;
   color: var(--text-primary);
   line-height: 1.5;
-  white-space: normal;
-  overflow: visible;
-  word-wrap: break-word;
-  hyphens: auto;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
-/* Due Date Column */
-.kev-col-duedate {
+/* Card Footer */
+.kev-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 0.8rem;
+}
+
+.kev-card-duedate {
   color: var(--text-muted);
   font-family: var(--font-mono);
   display: flex;
@@ -318,9 +288,17 @@
   gap: 0.4rem;
 }
 
-.kev-col-duedate i {
+.kev-card-duedate i {
   color: var(--accent-warning);
-  font-size: 0.75rem;
+}
+
+.kev-card-duedate-label {
+  color: var(--text-muted);
+}
+
+.kev-card-duedate-value {
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 /* Empty State */
@@ -348,56 +326,14 @@
    RESPONSIVE DESIGN
    ========================================== */
 
-@media (max-width: 1024px) {
-  .kev-table-header,
-  .kev-table-row {
-    grid-template-columns: 110px 90px 180px 1fr 100px;
-  }
-  
-  .kev-col {
-    padding: 0.65rem 0.75rem;
-  }
-}
-
 @media (max-width: 768px) {
-  .kev-table-header,
-  .kev-table-row {
+  .kev-card-grid {
     grid-template-columns: 1fr;
-    gap: 0.25rem;
   }
   
-  .kev-table-header {
-    display: none;
+  .kev-card {
+    padding: 0.875rem 1rem;
   }
-  
-  .kev-table-row {
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background: var(--bg-secondary);
-  }
-  
-  .kev-col {
-    padding: 0.35rem 0;
-    border: none;
-    white-space: normal;
-  }
-  
-  .kev-col::before {
-    content: attr(data-label);
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    display: block;
-    margin-bottom: 0.15rem;
-  }
-  
-  .kev-col-id::before { content: 'CVE ID'; }
-  .kev-col-severity::before { content: 'Severity'; }
-  .kev-col-product::before { content: 'Vendor › Product'; }
-  .kev-col-description::before { content: 'Vulnerability'; }
-  .kev-col-duedate::before { content: 'Due Date'; }
   
   .kev-panel .panel-header {
     flex-direction: column;
